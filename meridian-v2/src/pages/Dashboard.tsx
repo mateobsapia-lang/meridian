@@ -47,6 +47,7 @@ export function Dashboard() {
 
 // ─── SELLER ──────────────────────────────────────────────────
 function SellerDashboard({ userId }: { userId: string }) {
+  const { setSellerWizardOpen } = useAppContext();
   const [deals, setDeals] = useState<Deal[]>([]);
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [ndas, setNdas] = useState<NDARecord[]>([]);
@@ -107,7 +108,18 @@ function SellerDashboard({ userId }: { userId: string }) {
       <div className="border border-border-strong bg-paper p-8">
         <h3 className="font-mono text-[10px] uppercase tracking-widest text-ink-mute mb-6 border-b border-border-subtle pb-4">Mis Empresas</h3>
         {deals.length === 0 ? (
-          <div className="py-8 text-center text-ink-mute text-sm">No tenés empresas listadas aún.</div>
+          <div className="py-12 flex flex-col items-center justify-center text-center border-2 border-dashed border-border-strong bg-paper-deep">
+            <div className="w-16 h-16 bg-white border border-border-subtle rounded-full flex items-center justify-center shadow-sm mb-5 text-2xl">
+              🏢
+            </div>
+            <h4 className="font-serif text-[22px] font-bold text-ink mb-2">Aún no tenés empresas listadas</h4>
+            <p className="text-[13px] text-ink-soft max-w-sm mb-6 leading-relaxed">
+              Comenzá el proceso listando tu empresa de forma confidencial para conectarte con compradores institucionales de nuestra red.
+            </p>
+            <button onClick={() => setSellerWizardOpen(true)} className="btn-primary">
+              Listar mi primera empresa →
+            </button>
+          </div>
         ) : deals.map(d => (
           <div key={d.id} onClick={() => setSelectedDeal(d)}
             className={`flex items-center justify-between p-4 mb-2 border cursor-pointer transition-colors ${selectedDeal?.id === d.id ? 'border-accent bg-accent-light' : 'border-border-subtle hover:bg-paper-mid'}`}>
@@ -186,9 +198,17 @@ function BuyerDashboard({ userId }: { userId: string }) {
       <div className="border border-border-strong bg-paper p-8">
         <h3 className="font-mono text-[10px] uppercase tracking-widest text-ink-mute mb-6">Mis NDAs y Accesos</h3>
         {signedDeals.length === 0 ? (
-          <div className="py-8 text-center">
-            <p className="text-ink-mute text-sm mb-4">No tenés NDAs firmados aún.</p>
-            <button onClick={() => navigate('/mercado')} className="btn-primary">Explorar el Mercado</button>
+          <div className="py-12 flex flex-col items-center justify-center text-center border-2 border-dashed border-border-strong bg-paper-deep">
+            <div className="w-16 h-16 bg-white border border-border-subtle rounded-full flex items-center justify-center shadow-sm mb-5 text-2xl">
+              🔍
+            </div>
+            <h4 className="font-serif text-[22px] font-bold text-ink mb-2">No tenés NDAs firmados aún</h4>
+            <p className="text-[13px] text-ink-soft max-w-sm mb-6 leading-relaxed">
+              Explorá el mercado para encontrar oportunidades de inversión que se ajusten a tus criterios. Firmá tu primer NDA para acceder al Data Room confidencial.
+            </p>
+            <button onClick={() => navigate('/mercado')} className="btn-primary">
+              Explorar el Mercado →
+            </button>
           </div>
         ) : signedDeals.map(({ nda, deal }) => (
           <div key={nda.id} className="flex items-center justify-between p-4 mb-2 border border-border-subtle hover:bg-paper-mid">
