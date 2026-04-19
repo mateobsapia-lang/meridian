@@ -46,10 +46,14 @@ export function Dashboard() {
 }
 
 // ─── SELLER ──────────────────────────────────────────────────
+import { updateDeal } from '../lib/firestore';
+import { Modal } from '../components/Modal';
+
 function SellerDashboard({ userId }: { userId: string }) {
-  const { setSellerWizardOpen } = useAppContext();
+  const { setSellerWizardOpen, showToast } = useAppContext();
   const [deals, setDeals] = useState<Deal[]>([]);
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
+  const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
   const [ndas, setNdas] = useState<NDARecord[]>([]);
   const [docs, setDocs] = useState<DealDocument[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -84,6 +88,19 @@ function SellerDashboard({ userId }: { userId: string }) {
   };
 
   const activeDeal = deals.find(d => ['published','nda_phase','loi_received'].includes(d.status));
+
+  const handleSaveEdit = async (updatedData: Partial<Deal>) => {
+    if(!editingDeal) return;
+    try {
+      await updateDeal(editingDeal.id, updatedData);
+      setDeals(prev => prev.map(d => d.id === editingDeal.id ? { ...d, ...updatedData } : d));
+      if (selectedDeal?.id === editingDeal.id) setSelectedDeal({ ...selectedDeal, ...updatedData } as Deal);
+      setEditingDeal(null);
+      showToast('Empresa actualizada exitosamente.');
+    } catch {
+      showToast('Error al actualizar la empresa.');
+    }
+  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -124,7 +141,15 @@ function SellerDashboard({ userId }: { userId: string }) {
           <div key={d.id} onClick={() => setSelectedDeal(d)}
             className={`flex items-center justify-between p-4 mb-2 border cursor-pointer transition-colors ${selectedDeal?.id === d.id ? 'border-accent bg-accent-light' : 'border-border-subtle hover:bg-paper-mid'}`}>
             <div>
-              <div className="font-medium text-ink">{d.nombreFantasia}</div>
+              <div className="font-medium text-ink flex items-center gap-2">
+                {d.nombreFantasia}
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setEditingDeal(d); }}
+                  className="text-[10px] font-mono border border-border-strong px-2 py-0.5 hover:bg-white text-ink-soft transition-colors"
+                >
+                  Editar
+                </button>
+              </div>
               <div className="font-mono text-[10px] text-ink-mute mt-0.5">{d.id} · {d.industria}</div>
             </div>
             <div className="flex items-center gap-3">
@@ -134,6 +159,14 @@ function SellerDashboard({ userId }: { userId: string }) {
           </div>
         ))}
       </div>
+
+      {editingDeal && (
+        <EditDealModal 
+          deal={editingDeal} 
+          onClose={() => setEditingDeal(null)} 
+          onSave={handleSaveEdit} 
+        />
+      )}
 
       {/* DEAL DETAIL */}
       {selectedDeal && (
@@ -172,6 +205,90 @@ function SellerDashboard({ userId }: { userId: string }) {
         </div>
       )}
     </div>
+  );
+}
+
+const INDUSTRIES = ['SaaS / Tech', 'Agro', 'Manufactura', 'Servicios', 'Retail', 'Salud', 'Construcción', 'Logística', 'Otro'];
+const REGIONS = ['CABA', 'Buenos Aires', 'Córdoba', 'Santa Fe', 'Mendoza', 'Entre Ríos', 'Tucumán', 'Otro'];
+
+function EditDealModal({ deal, onClose, onSave }: { deal: Deal, onClose: () => void, onSave: (data: Partial<Deal>) => void }) {
+  const [form, setForm] = useState({
+    nombreFantasia: deal.nombreFantasia || '',
+    industria: deal.industria || '',
+    region: deal.region || '',
+    descripcion: deal.descripcion || '',
+    revenue: deal.revenue ? Math.round(deal.revenue / 1000).toString() : '',
+    ebitda: deal.ebitda ? Math.round(deal.ebitda / 1000).toString() : '',
+    askingPrice: deal.askingPrice ? Math.round(deal.askingPrice / 1000).toString() : '',
+  });
+
+  const handle = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave({
+      nombreFantasia: form.nombreFantasia,
+      industria: form.industria,
+      region: form.region,
+      descripcion: form.descripcion,
+      revenue: Number(form.revenue) * 1000,
+      ebitda: Number(form.ebitda) * 1000,
+      askingPrice: Number(form.askingPrice) * 1000,
+    });
+  };
+
+  const inputClass = "w-full border border-border-strong bg-paper text-ink text-[13px] px-3 py-2.5 focus:outline-none focus:border-accent transition-colors";
+  const labelClass = "block font-mono text-[9px] uppercase tracking-[0.12em] text-ink-mute mb-1.5";
+
+  return (
+    <Modal isOpen={true} onClose={onClose} title={`Editar ${deal.id}`}>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {deal.status !== 'under_review' && deal.status !== 'draft' && (
+          <div className="bg-amber-50 border border-amber-300 p-3 text-[12px] text-amber-800 mb-2">
+            <strong>Nota:</strong> Como esta empresa ya fue publicada o está en proceso, cualquier edición podría requerir una nueva revisión por parte del equipo de Meridian.
+          </div>
+        )}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="col-span-2">
+            <label className={labelClass}>Nombre Fantasía</label>
+            <input name="nombreFantasia" value={form.nombreFantasia} onChange={handle} className={inputClass} required />
+          </div>
+          <div>
+            <label className={labelClass}>Industria</label>
+            <select name="industria" value={form.industria} onChange={handle} className={inputClass}>
+              {INDUSTRIES.map(i => <option key={i}>{i}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={labelClass}>Región</label>
+            <select name="region" value={form.region} onChange={handle} className={inputClass}>
+              {REGIONS.map(r => <option key={r}>{r}</option>)}
+            </select>
+          </div>
+          <div className="col-span-2">
+            <label className={labelClass}>Descripción (Teaser)</label>
+            <textarea name="descripcion" value={form.descripcion} onChange={handle} className={inputClass + " resize-none"} rows={4} required />
+          </div>
+          <div>
+            <label className={labelClass}>Revenue (USD miles)</label>
+            <input type="number" name="revenue" value={form.revenue} onChange={handle} className={inputClass} required />
+          </div>
+          <div>
+            <label className={labelClass}>EBITDA (USD miles)</label>
+            <input type="number" name="ebitda" value={form.ebitda} onChange={handle} className={inputClass} required />
+          </div>
+          <div className="col-span-2">
+            <label className={labelClass}>Precio de Venta Deseado (USD miles)</label>
+            <input type="number" name="askingPrice" value={form.askingPrice} onChange={handle} className={inputClass} required />
+          </div>
+        </div>
+        <div className="flex gap-3 mt-4 pt-4 border-t border-border-subtle">
+          <button type="button" onClick={onClose} className="btn-ghost flex-1">Cancelar</button>
+          <button type="submit" className="btn-primary flex-1">Guardar Cambios</button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 
