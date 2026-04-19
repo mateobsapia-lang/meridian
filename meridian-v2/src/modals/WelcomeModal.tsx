@@ -7,7 +7,7 @@ export function WelcomeModal() {
   const { user, setLoginModalOpen } = useAppContext();
   const [show, setShow] = useState(false);
   const [step, setStep] = useState<'welcome' | 'tc'>('welcome');
-  const [role, setRole] = useState<'buyer' | 'seller' | null>(null);
+  const [role, setRole] = useState<'buyer' | 'seller' | 'viewer' | null>(null);
   const [accepted, setAccepted] = useState(false);
   const [scrolledToBottom, setScrolledToBottom] = useState(false);
 
@@ -73,14 +73,15 @@ export function WelcomeModal() {
                   {role === 'buyer' && <span className="ml-auto text-accent">✓</span>}
                 </button>
                 <button
-                  onClick={() => setRole('buyer')}
-                  className={`flex items-start gap-4 p-4 border transition-all text-left ${role === 'buyer' && !role ? 'border-accent bg-accent-light' : 'border-border-strong hover:bg-paper-mid'}`}
+                  onClick={() => setRole('viewer')}
+                  className={`flex items-start gap-4 p-4 border transition-all text-left ${role === 'viewer' ? 'border-accent bg-accent-light' : 'border-border-strong hover:bg-paper-mid'}`}
                 >
                   <span className="text-2xl mt-0.5">👀</span>
                   <div>
                     <div className="font-medium text-ink text-[14px]">Solo estoy explorando</div>
                     <div className="text-[12px] text-ink-mute mt-0.5">Conocé cómo funciona el mercado privado argentino</div>
                   </div>
+                  {role === 'viewer' && <span className="ml-auto text-accent">✓</span>}
                 </button>
               </div>
             </div>
