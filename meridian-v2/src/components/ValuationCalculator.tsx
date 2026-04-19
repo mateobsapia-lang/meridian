@@ -11,131 +11,130 @@ const INDUSTRIES = [
   { name: 'Manufactura Industrial', multiplier: 4.2 },
   { name: 'Otros Sectores', multiplier: 4.0 },
   { name: 'Retail / Omnicanal', multiplier: 3.5 },
-  { name: 'Construcción e Ingeniería', multiplier: 3.5 }
+  { name: 'Construcción e Ingeniería', multiplier: 3.5 },
 ];
 
 export function ValuationCalculator() {
-  const { setLeadModalOpen } = useAppContext();
+  const { setSellerWizardOpen } = useAppContext();
   const [revenue, setRevenue] = useState(2500000);
   const [margin, setMargin] = useState(20);
   const [industryMult, setIndustryMult] = useState(4.2);
   const [isRecurring, setIsRecurring] = useState(false);
 
   const ebitda = revenue * (margin / 100);
-  // Recurring revenue commands a 20% premium on multiples
   const effectiveMultiple = isRecurring ? industryMult * 1.2 : industryMult;
-  
   const valMin = ebitda * effectiveMultiple * 0.85;
   const valMax = ebitda * effectiveMultiple * 1.15;
 
-  const fmtCurrency = (v: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v);
-  };
-  
-  const fmtM = (v: number) => `$${(v / 1000000).toFixed(2)}M`;
+  const fmtUSD = (v: number) =>
+    new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v);
+  const fmtM = (v: number) => `USD ${(v / 1_000_000).toFixed(2)}M`;
 
   return (
-    <div className="bg-ink p-5 sm:p-8 md:p-12 text-white relative overflow-hidden border border-border-strong shadow-2xl">
-      {/* Background Atmosphere */}
-      <div className="absolute top-[-30%] right-[-10%] w-[60%] h-[150%] bg-accent/20 blur-[120px] pointer-events-none"></div>
+    <div className="bg-ink text-white relative overflow-hidden border border-border-strong shadow-2xl">
+      <div className="absolute top-[-30%] right-[-10%] w-[60%] h-[150%] bg-accent/20 blur-[120px] pointer-events-none" />
 
-      <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start relative z-10">
-        {/* LEFT COL: Context & Copy */}
-        <div className="flex-1 pt-2 md:pt-4">
-          <div className="font-mono text-[9px] tracking-[0.16em] uppercase text-accent mb-3 md:mb-4">Motor de Precisión</div>
-          <h2 className="font-serif text-[28px] sm:text-[32px] md:text-[44px] font-bold leading-[1.05] tracking-[-0.02em] mb-4 md:mb-5">
-            ¿Cuál es el valor real de su empresa hoy?
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2">
+        {/* LEFT */}
+        <div className="p-8 md:p-12 flex flex-col justify-center gap-6 border-b lg:border-b-0 lg:border-r border-white/10">
+          <div className="font-mono text-[9px] tracking-[0.16em] uppercase text-accent">Motor de Precisión</div>
+          <h2 className="font-serif text-[26px] sm:text-[32px] md:text-[40px] font-bold leading-[1.05] tracking-[-0.02em]">
+            ¿Cuál es el valor real de tu empresa hoy?
           </h2>
-          <p className="text-[13px] md:text-[14px] text-white/60 leading-[1.6] mb-6 md:mb-8 font-light max-w-[420px]">
-            Explore la valuación teórica de su compañía combinando sus métricas financieras con los múltiplos de transacción promediados este trimestre en el mercado de capitales privado.
+          <p className="text-[13px] text-white/60 leading-[1.65] font-light max-w-sm">
+            Estimá la valuación de tu compañía combinando tus métricas financieras con los múltiplos de transacción del mercado privado argentino.
           </p>
+          <button
+            onClick={() => setSellerWizardOpen(true)}
+            className="mt-2 self-start text-[11px] font-mono tracking-widest uppercase border border-accent/40 text-accent px-5 py-3 hover:bg-accent hover:text-white transition-colors"
+          >
+            Listar mi empresa →
+          </button>
         </div>
 
-        {/* RIGHT COL: Terminal / Specialist Tool */}
-        <div className="flex-[1.2] w-full bg-[#151619] p-5 sm:p-8 md:p-10 rounded-sm border border-[#2a2b2f] shadow-2xl flex flex-col gap-6 md:gap-8">
-          
-          {/* Controls */}
-          <div className="flex flex-col gap-6 md:gap-7">
-            {/* Sector Selector */}
-            <div>
-              <div className="flex flex-wrap items-end justify-between font-mono mb-2 md:mb-3 gap-2">
-                <span className="text-white/40 uppercase tracking-widest text-[9px]">Sector Industrial</span>
-                <span className="text-accent text-[9px] tracking-widest uppercase">Múltiplo Base: {industryMult.toFixed(1)}x</span>
-              </div>
-              <div className="relative">
-                <select 
-                  value={industryMult}
-                  onChange={e => setIndustryMult(Number(e.target.value))}
-                  className="w-full bg-[#0D0D0B] border border-white/10 text-white/90 text-[13px] py-3 px-3 md:px-4 outline-none focus:border-accent appearance-none cursor-pointer"
-                >
-                  {INDUSTRIES.map(ind => (
-                    <option key={ind.name} value={ind.multiplier}>{ind.name}</option>
-                  ))}
-                </select>
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50 text-[10px]">▼</div>
-              </div>
-            </div>
+        {/* RIGHT — calculator */}
+        <div className="p-8 md:p-12 bg-[#0d0e10] flex flex-col gap-7">
 
-            {/* ARR Toggle */}
-            <div className="flex items-center justify-between p-3 md:p-4 border border-white/5 bg-white/5 cursor-pointer hover:bg-white/10 transition-colors gap-3" onClick={() => setIsRecurring(!isRecurring)}>
-              <div className="flex-1">
-                <div className="text-[11px] md:text-[12px] font-medium text-white mb-1">¿Más del 60% Ingresos Recurrentes?</div>
-                <div className="text-[9px] md:text-[10px] text-white/40 font-mono tracking-wide leading-tight">Cobra un premium de liquidez</div>
-              </div>
-              <div className={`w-9 h-5 md:w-10 rounded-full relative transition-colors shrink-0 ${isRecurring ? 'bg-accent' : 'bg-white/20'}`}>
-                <div className={`absolute top-1 bg-white w-3 h-3 rounded-full transition-all ${isRecurring ? 'left-5 md:left-6' : 'left-1'}`}></div>
-              </div>
-            </div>
-
-            {/* Revenue Slider */}
-            <div>
-              <div className="flex justify-between font-mono mb-3">
-                <span className="text-white/40 uppercase tracking-widest text-[9px]">Ventas (LTM)</span>
-                <span className="text-white font-medium text-[11px] md:text-[12px]">{fmtCurrency(revenue)}</span>
-              </div>
-              <input 
-                type="range" min="500000" max="20000000" step="100000" 
-                value={revenue} onChange={e => setRevenue(Number(e.target.value))} 
-                className="w-full h-1 bg-white/10 rounded-full appearance-none outline-none accent-accent cursor-pointer" 
-              />
-            </div>
-            
-            {/* Margin Slider */}
-            <div>
-              <div className="flex justify-between font-mono mb-3">
-                <span className="text-white/40 uppercase tracking-widest text-[9px]">Margen EBITDA</span>
-                <span className="text-white font-medium text-[11px] md:text-[12px]">{margin}%</span>
-              </div>
-              <input 
-                type="range" min="5" max="50" step="1" 
-                value={margin} onChange={e => setMargin(Number(e.target.value))} 
-                className="w-full h-1 bg-white/10 rounded-full appearance-none outline-none accent-accent cursor-pointer" 
-              />
-            </div>
-          </div>
-
-          {/* Output Display */}
-          <div className="pt-6 md:pt-8 border-t border-white/10 flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[8px] md:text-[9px] font-mono uppercase tracking-[0.1em] text-white/40">EBITDA Generado</span>
-              <span className="font-mono text-[11px] md:text-[12px] text-white/60">{fmtCurrency(ebitda)}</span>
-            </div>
+          {/* Sector */}
+          <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[8px] md:text-[9px] font-mono uppercase tracking-[0.1em] text-white/40">Múltiplo Efectivo</span>
-              <span className="font-mono text-[11px] md:text-[12px] text-white/60">{(effectiveMultiple).toFixed(2)}x</span>
+              <span className="font-mono text-[9px] uppercase tracking-widest text-white/40">Sector</span>
+              <span className="font-mono text-[9px] text-accent">{industryMult.toFixed(1)}× base</span>
             </div>
-            
-            <div className="bg-[#0b0c0e] border border-accent/20 p-4 md:p-5 mt-2 flex flex-col items-center justify-center relative overflow-hidden w-full text-center">
-              <div className="absolute inset-0 bg-accent/5"></div>
-              <div className="text-[8px] sm:text-[9px] font-mono uppercase tracking-[0.1em] sm:tracking-[0.15em] text-accent mb-2 relative z-10 w-full">Valuación de Mercado</div>
-              <div className="font-serif text-[24px] sm:text-[32px] md:text-[38px] font-bold text-white relative z-10 flex flex-wrap justify-center items-center gap-x-2 gap-y-0 w-full">
-                <span>{fmtM(valMin)}</span>
-                <span className="text-[18px] md:text-[20px] text-white/20 font-light">—</span>
-                <span>{fmtM(valMax)}</span>
-              </div>
+            <div className="relative">
+              <select
+                value={industryMult}
+                onChange={e => setIndustryMult(Number(e.target.value))}
+                className="w-full bg-white/5 border border-white/10 text-white text-[13px] py-3 px-4 outline-none focus:border-accent appearance-none cursor-pointer"
+              >
+                {INDUSTRIES.map(i => <option key={i.name} value={i.multiplier}>{i.name}</option>)}
+              </select>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 text-[10px] pointer-events-none">▼</span>
             </div>
           </div>
 
+          {/* Recurring toggle */}
+          <button
+            onClick={() => setIsRecurring(!isRecurring)}
+            className="flex items-center justify-between p-4 border border-white/10 bg-white/5 hover:bg-white/10 transition-colors w-full text-left"
+          >
+            <div>
+              <div className="text-[12px] font-medium text-white mb-0.5">+60% ingresos recurrentes</div>
+              <div className="text-[10px] text-white/40 font-mono">Prima de liquidez +20% en múltiplo</div>
+            </div>
+            <div className={`w-10 h-5 rounded-full relative transition-colors shrink-0 ml-4 ${isRecurring ? 'bg-accent' : 'bg-white/20'}`}>
+              <div className={`absolute top-1 bg-white w-3 h-3 rounded-full transition-all ${isRecurring ? 'left-6' : 'left-1'}`} />
+            </div>
+          </button>
+
+          {/* Revenue slider */}
+          <div>
+            <div className="flex justify-between font-mono mb-3">
+              <span className="text-white/40 uppercase tracking-widest text-[9px]">Ventas Anuales (LTM)</span>
+              <span className="text-white font-medium text-[12px]">{fmtUSD(revenue)}</span>
+            </div>
+            <input type="range" min="500000" max="20000000" step="100000"
+              value={revenue} onChange={e => setRevenue(Number(e.target.value))}
+              className="w-full h-1 bg-white/10 rounded-full appearance-none outline-none accent-accent cursor-pointer" />
+            <div className="flex justify-between font-mono text-[9px] text-white/20 mt-1">
+              <span>USD 500K</span><span>USD 20M</span>
+            </div>
+          </div>
+
+          {/* Margin slider */}
+          <div>
+            <div className="flex justify-between font-mono mb-3">
+              <span className="text-white/40 uppercase tracking-widest text-[9px]">Margen EBITDA</span>
+              <span className="text-white font-medium text-[12px]">{margin}%</span>
+            </div>
+            <input type="range" min="5" max="50" step="1"
+              value={margin} onChange={e => setMargin(Number(e.target.value))}
+              className="w-full h-1 bg-white/10 rounded-full appearance-none outline-none accent-accent cursor-pointer" />
+            <div className="flex justify-between font-mono text-[9px] text-white/20 mt-1">
+              <span>5%</span><span>50%</span>
+            </div>
+          </div>
+
+          {/* Output */}
+          <div className="border-t border-white/10 pt-6 flex flex-col gap-3">
+            <div className="flex justify-between text-[11px] font-mono">
+              <span className="text-white/40">EBITDA estimado</span>
+              <span className="text-white/70">{fmtUSD(ebitda)}</span>
+            </div>
+            <div className="flex justify-between text-[11px] font-mono">
+              <span className="text-white/40">Múltiplo efectivo</span>
+              <span className="text-white/70">{effectiveMultiple.toFixed(2)}×</span>
+            </div>
+            <div className="mt-2 bg-accent/10 border border-accent/30 p-5 text-center">
+              <div className="font-mono text-[9px] uppercase tracking-widest text-accent mb-3">Valuación estimada</div>
+              <div className="font-serif font-bold text-white leading-none">
+                <span className="text-[28px] sm:text-[36px]">{fmtM(valMin)}</span>
+                <span className="text-[20px] text-white/30 mx-3">—</span>
+                <span className="text-[28px] sm:text-[36px]">{fmtM(valMax)}</span>
+              </div>
+              <div className="font-mono text-[9px] text-white/30 mt-3">Rango orientativo · No constituye oferta de compra</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
