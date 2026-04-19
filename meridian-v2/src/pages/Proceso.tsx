@@ -1,73 +1,94 @@
+import { motion } from 'motion/react';
 import { useAppContext } from '../AppContext';
+
+const PHASES = [
+  {
+    phase: 'Fase 1', title: 'Listado y Preparación', duration: '2–4 semanas',
+    seller: ['Completás el wizard de información', 'Subís estados contables y documentación', 'Nuestro equipo audita los datos'],
+    buyer: ['Explorás el mercado con teasers ciegos', 'El match score prioriza tus oportunidades'],
+    color: 'border-accent',
+  },
+  {
+    phase: 'Fase 2', title: 'NDA y Acceso Confidencial', duration: '1–2 semanas',
+    seller: ['Recibís solicitudes de NDA de compradores verificados', 'Aprobás o rechazás cada acceso', 'El data room se activa para compradores aprobados'],
+    buyer: ['Firmás el NDA digital', 'Accedés a información completa: nombre, contactos, docs', 'Analizás el data room'],
+    color: 'border-amber-400',
+  },
+  {
+    phase: 'Fase 3', title: 'Due Diligence', duration: '4–8 semanas',
+    seller: ['Te reunís con compradores serios', 'Respondés preguntas de management', 'Recibís Indicaciones de Interés (IOI)'],
+    buyer: ['Realizás due diligence financiero, legal y operativo', 'Presentás una IOI con precio y estructura'],
+    color: 'border-blue-400',
+  },
+  {
+    phase: 'Fase 4', title: 'Negociación y Cierre', duration: '4–12 semanas',
+    seller: ['Evaluás las ofertas con nuestros analistas', 'Negociás términos: precio, earnout, management'],
+    buyer: ['Enviás Letter of Intent (LOI)', 'Coordinás el cierre con tus asesores legales'],
+    color: 'border-purple-400',
+  },
+];
 
 export function Proceso() {
   const { setSellerWizardOpen, setBuyerWizardOpen } = useAppContext();
 
   return (
-    <div className="animate-in fade-in duration-500 py-16 md:py-24 border-t border-border-strong">
-      <div className="container-custom">
-        <div className="max-w-[560px]">
-          <p className="eyebrow eyebrow-accent mb-3">Cómo funciona</p>
-          <h2 className="font-serif text-[32px] md:text-[48px] font-bold text-ink tracking-[-0.02em] leading-[1.05]">
-            Un proceso institucional, de principio a cierre.
-          </h2>
+    <div className="animate-in fade-in duration-500">
+      <section className="bg-paper-deep pt-16 pb-20 border-b border-border-strong">
+        <div className="container-custom max-w-3xl">
+          <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-accent mb-4">Metodología</div>
+          <h1 className="font-serif text-[36px] sm:text-[48px] md:text-[60px] font-bold leading-[0.95] tracking-[-0.025em] text-ink mb-6">
+            Un proceso riguroso de principio a fin
+          </h1>
+          <p className="text-[16px] text-ink-soft leading-[1.65] font-light">
+            Meridian estructura cada transacción con las mismas fases que usan los bancos de inversión globales, adaptadas al mid-market argentino.
+          </p>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-20 items-start mt-14">
-          {/* Vendedor */}
-          <div>
-            <div className="font-mono text-[9px] tracking-[0.16em] uppercase px-3 py-1.5 border border-border-strong inline-block mb-6 text-ink-soft">
-              Para vendedores
-            </div>
-            <div className="flex flex-col">
-              <Step num="01" title="Registro y verificación legal" desc="Verificamos situación societaria (IGJ), fiscal (AFIP) y concursal (Ley 24.522). Sin juicios ni deudas críticas, la empresa pasa al siguiente paso." badge="Legal check automático" />
-              <Step num="02" title="Carga de métricas y documentación" desc="Revenue, EBITDA, crecimiento, deuda, working capital. Estados financieros de los últimos 3 años." />
-              <Step num="03" title="Readiness Score y valuación" desc="La plataforma genera un score de preparación (0-100) y una valuación automática por múltiplos de industria y DCF simplificado." badge="Valuación USD X – Y" />
-              <Step num="04" title="Publicación anónima en el mercado" desc="La empresa aparece sin nombre ni datos identificatorios. Solo métricas financieras y ubicación general." />
-              <Step num="05" title="NDA y due diligence" desc="Los compradores firman NDA digital (Ley 25.506) antes de acceder al data room con documentación completa." />
-              <Step num="06" title="LOI y cierre asistido" desc="El comprador envía una Letter of Intent. Nuestros analistas acompañan la negociación hasta el cierre." badge="Success fee al cierre" last />
-            </div>
-            <div className="mt-8">
-              <button onClick={() => setSellerWizardOpen(true)} className="btn-primary w-full sm:w-auto">Listar mi empresa</button>
-            </div>
-          </div>
-          
-          {/* Comprador */}
-          <div>
-            <div className="font-mono text-[9px] tracking-[0.16em] uppercase px-3 py-1.5 border border-border-strong inline-block mb-6 text-ink-soft">
-              Para compradores
-            </div>
-            <div className="flex flex-col">
-              <Step num="01" title="Registro y KYC institucional" desc="Verificación de identidad (Metamap), declaración de origen de fondos y perfil inversor. Cumplimiento UIF / Ley 25.246." badge="KYC · AML · PEP check" />
-              <Step num="02" title="Configuración de tesis inversora" desc="Industrias de interés, ticket mínimo y máximo, criterios de EBITDA y crecimiento. El sistema usa esto para calcular compatibilidad." />
-              <Step num="03" title="Deal flow personalizado" desc="Acceso al marketplace con matching score por deal. Los deals de alta compatibilidad llegan por alerta en tiempo real." badge="Matching 92% compatible" />
-              <Step num="04" title="Firma de NDA y acceso al data room" desc="NDA digital firmado en la plataforma. Acceso a estados financieros, contratos y Q&A con el seller (mediado por analistas)." />
-              <Step num="05" title="Due diligence estructurado" desc="Data room con documentos organizados, watermark por comprador, audit trail completo de cada acceso." />
-              <Step num="06" title="LOI y negociación" desc="Presentación de oferta formal (LOI), seguimiento del proceso por un analista dedicado hasta el cierre." last />
-            </div>
-            <div className="mt-8">
-              <button onClick={() => setBuyerWizardOpen(true)} className="btn-primary w-full sm:w-auto">Registro comprador</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+      </section>
 
-function Step({ num, title, desc, badge, last }: { num: string, title: string, desc: string, badge?: string, last?: boolean }) {
-  return (
-    <div className={`flex gap-4 py-4 ${last ? '' : 'border-b border-border-subtle'}`}>
-      <span className="font-mono text-[11px] text-ink-mute min-w-6 pt-0.5">{num}</span>
-      <div>
-        <div className="text-[13px] font-medium text-ink mb-1">{title}</div>
-        <div className="text-[11px] text-ink-mute leading-[1.5]">{desc}</div>
-        {badge && (
-          <span className="inline-block mt-2 text-[9px] font-medium tracking-[0.1em] uppercase py-0.5 px-2 bg-accent-light text-accent rounded-sm">
-            {badge}
-          </span>
-        )}
-      </div>
+      <section className="py-16 bg-paper">
+        <div className="container-custom">
+          <div className="flex flex-col gap-6">
+            {PHASES.map((phase, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }} viewport={{ once: true }}
+                className={`border-l-4 ${phase.color} bg-paper border border-border-strong pl-6 pr-6 py-8`}>
+                <div className="flex flex-wrap items-center gap-4 mb-6">
+                  <span className="font-mono text-[9px] uppercase tracking-widest text-ink-mute">{phase.phase}</span>
+                  <h3 className="font-serif text-[22px] md:text-[26px] font-bold text-ink">{phase.title}</h3>
+                  <span className="ml-auto font-mono text-[10px] text-ink-mute border border-border-strong px-3 py-1">{phase.duration}</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-3">🏢 Vendedor</div>
+                    <ul className="flex flex-col gap-2">
+                      {phase.seller.map((s, j) => (
+                        <li key={j} className="flex items-start gap-2 text-[13px] text-ink-soft">
+                          <span className="text-accent mt-0.5 shrink-0">→</span> {s}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-3">🔍 Comprador</div>
+                    <ul className="flex flex-col gap-2">
+                      {phase.buyer.map((b, j) => (
+                        <li key={j} className="flex items-start gap-2 text-[13px] text-ink-soft">
+                          <span className="text-blue-400 mt-0.5 shrink-0">→</span> {b}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
+            <button onClick={() => setSellerWizardOpen(true)} className="btn-primary">Listar mi Empresa</button>
+            <button onClick={() => setBuyerWizardOpen(true)} className="btn-ghost">Registrarme como Comprador</button>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
