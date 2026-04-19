@@ -66,26 +66,52 @@ export function NDAModal() {
             </h3>
           </div>
 
-          <div className="border border-border-strong bg-paper-deep p-5 h-48 overflow-y-auto text-[12px] text-ink-soft leading-relaxed font-serif">
-            <p className="mb-3"><strong>Acuerdo de Confidencialidad</strong></p>
-            <p className="mb-3">El firmante (en adelante "el Receptor") se compromete a mantener estricta confidencialidad respecto de toda información relacionada con la empresa objeto de análisis, sus operaciones, finanzas, clientes, proveedores, estrategias y cualquier otro dato no público al que tenga acceso como resultado del presente proceso de due diligence.</p>
-            <p className="mb-3">El Receptor se obliga a: (i) no divulgar, comunicar ni transferir a terceros la Información Confidencial; (ii) utilizar la información exclusivamente para evaluar una posible transacción; (iii) no utilizar la información para competir directa o indirectamente con la empresa.</p>
-            <p className="mb-3">El incumplimiento de este acuerdo dará lugar a las acciones legales correspondientes según la legislación argentina aplicable. Este acuerdo tiene una vigencia de 24 meses a partir de la fecha de firma.</p>
-            <p>Al aceptar este acuerdo, el Receptor confirma haber leído, comprendido y aceptado todas las condiciones aquí establecidas.</p>
+          <div className="border border-border-strong bg-paper-deep p-6 h-64 overflow-y-auto text-[12px] text-ink-soft leading-relaxed font-serif relative">
+            {/* Watermark */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03]">
+              <span className="text-8xl font-black rotate-[-30deg]">CONFIDENCIAL</span>
+            </div>
+            
+            <div className="relative z-10 space-y-4">
+              <h4 className="text-center font-bold text-ink text-[14px] mb-6">ACUERDO DE NO DIVULGACIÓN (NDA)</h4>
+              
+              <p>
+                Entre <strong>MERIDIAN M&A LLC</strong> (en adelante, la "Parte Reveladora") y <strong>{user?.name?.toUpperCase() || 'EL RECEPTOR'}</strong>, titular de la cuenta de correo electrónico <strong>{user?.email}</strong> (en adelante, el "Receptor"), se celebra el presente Acuerdo de Confidencialidad a los {new Date().getDate()} días del mes de {new Date().toLocaleString('es-ES', { month: 'long' })} de {new Date().getFullYear()}.
+              </p>
+              
+              <p>
+                <strong>1. OBJETO.</strong> La Parte Reveladora compartirá con el Receptor información confidencial relacionada a la oportunidad de inversión identificada como <strong>Proyecto {deal?.id}</strong> en la industria de <strong>{deal?.industria}</strong> (en adelante "La Empresa"), con el único propósito de evaluar una posible transacción (el "Propósito").
+              </p>
+              
+              <p>
+                <strong>2. INFORMACIÓN CONFIDENCIAL.</strong> Se considera Información Confidencial a todos los datos financieros, operativos, comerciales, fiscales, laborales, tecnológicos y estratégicos de La Empresa, incluyendo su identidad, métricas de retención, EBITDA reportado de <strong>USD {(deal?.ebitda || 0) / 1000}K</strong> y Revenue de <strong>USD {(deal?.revenue || 0) / 1000}K</strong>, así como la existencia misma de las negociaciones informadas a través de la plataforma Meridian.
+              </p>
+              
+              <p>
+                <strong>3. OBLIGACIONES DEL RECEPTOR.</strong> El Receptor se obliga expresa e irrevocablemente a (a) mantener la Información Confidencial en la más estricta reserva; (b) no revelarla, transferirla, divulgarla ni publicarla por ningún medio; (c) no utilizar la información para competir directa o indirectamente contra La Empresa, ni para contactar a sus clientes, empleados o proveedores; y (d) no intentar circunvalar a Meridian M&A LLC en la presente transacción.
+              </p>
+              
+              <p>
+                <strong>4. PENALIDADES.</strong> En caso de incumplimiento comprobado, la Parte Reveladora se reserva el derecho de reclamar daños y perjuicios de acuerdo a la legislación vigente aplicable en la Ciudad Autónoma de Buenos Aires, República Argentina, además de la suspensión permanente de la cuenta del Receptor en la plataforma Meridian.
+              </p>
+              
+              <p className="mt-8 pt-4 border-t border-border-subtle flex flex-col items-end">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-2">Firma Digital Registrada</span>
+                <span className="font-serif italic text-ink text-[16px]">{user?.name}</span>
+                <span className="font-mono text-[8px] text-ink-mute">ID: {user?.uid?.substring(0, 8)} · TIMESTAMP: {new Date().getTime()}</span>
+              </p>
+            </div>
           </div>
 
-          <div className="bg-paper-deep border border-border-subtle p-4 text-[12px] text-ink-soft">
-            <div><strong>Firmante:</strong> {user?.name}</div>
-            <div><strong>Email:</strong> {user?.email}</div>
-          </div>
-
-          <label className="flex items-start gap-3 cursor-pointer">
+          <label className="flex items-start gap-3 cursor-pointer bg-paper-deep border border-border-subtle p-4 mt-2">
             <input type="checkbox" checked={accepted} onChange={e => setAccepted(e.target.checked)} className="mt-0.5 accent-accent" />
-            <span className="text-[12px] text-ink-soft">Leí y acepto el Acuerdo de Confidencialidad. Entiendo que el incumplimiento tiene consecuencias legales.</span>
+            <span className="text-[12px] text-ink-soft">
+              Declaro bajo juramento mi identidad y acepto las consecuencias legales vinculantes de este <strong>Acuerdo de Confidencialidad</strong>.
+            </span>
           </label>
 
           <button onClick={handleSubmit} disabled={!accepted || submitting} className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed">
-            {submitting ? 'Enviando...' : 'Firmar y Solicitar Acceso'}
+            {submitting ? 'Registrando firma digital...' : 'Firmar Digitalmente y Solicitar Acceso'}
           </button>
         </div>
       )}
