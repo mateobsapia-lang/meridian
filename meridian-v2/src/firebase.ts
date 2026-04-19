@@ -3,27 +3,17 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
-// ─────────────────────────────────────────────────────────────
-// INSTRUCCIONES:
-// 1. Ir a https://console.firebase.google.com
-// 2. Crear proyecto → Agregar app web
-// 3. Copiar el firebaseConfig y pegarlo acá abajo
-// 4. Habilitar: Authentication (Email/Password + Google)
-//              Firestore Database
-//              Storage
-// ─────────────────────────────────────────────────────────────
-
 const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_PROJECT.firebaseapp.com",
-  projectId: "TU_PROJECT_ID",
-  storageBucket: "TU_PROJECT.appspot.com",
-  messagingSenderId: "TU_SENDER_ID",
-  appId: "TU_APP_ID"
+  apiKey: "AIzaSyBukRgyPQzwC1QE0XgN1XHxKlq1T78SrFo",
+  authDomain: "ai-studio-applet-webapp-9c65e.firebaseapp.com",
+  projectId: "ai-studio-applet-webapp-9c65e",
+  storageBucket: "ai-studio-applet-webapp-9c65e.firebasestorage.app",
+  messagingSenderId: "788975736680",
+  appId: "1:788975736680:web:e82f65133587072e3b68dd"
 };
 
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+export const db = getFirestore(app, 'ai-studio-f4b65f53-ac57-48b1-9ed2-56362abb2b48');
 export const storage = getStorage(app);
