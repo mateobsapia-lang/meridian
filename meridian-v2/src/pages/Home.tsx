@@ -133,14 +133,19 @@ export function Home() {
                   }`}
                   onClick={() => !deal.placeholder && openNdaModal(deal.id)}
                 >
-                {deal.placeholder && (
-                  <div className="absolute top-3 right-3 font-mono text-[8px] uppercase tracking-widest border border-border-strong px-2 py-0.5 text-ink-mute">
-                    Ejemplo
+                <div className="flex flex-wrap items-start justify-between gap-3 min-h-[48px]">
+                  <span className="text-[9px] font-medium tracking-[0.1em] uppercase border border-border-strong px-2 py-[3px] text-ink-soft bg-paper">
+                    {deal.industria}
+                  </span>
+                  
+                  <div className="flex flex-col items-end gap-2 ml-auto">
+                    {deal.placeholder && (
+                      <span className="font-mono text-[8px] uppercase tracking-widest bg-accent-light border border-accent/20 px-2 py-0.5 text-accent">
+                        EJEMPLO
+                      </span>
+                    )}
+                    <span className="font-mono text-[10px] text-ink-mute">{deal.region}</span>
                   </div>
-                )}
-                <div className="flex items-start justify-between">
-                  <span className="text-[9px] font-medium tracking-[0.1em] uppercase border border-border-strong px-2 py-0.5 text-ink-soft">{deal.industria}</span>
-                  <span className="font-mono text-[10px] text-ink-mute">{deal.region}</span>
                 </div>
                 <div>
                   <div className="font-serif text-[20px] font-bold text-ink mb-1">
