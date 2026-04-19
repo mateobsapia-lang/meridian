@@ -40,9 +40,9 @@ export function Header() {
                 </button>
               </div>
             ) : (
-              <div className="flex gap-2 items-center">
+             <div className="flex gap-2 items-center">
                 <button onClick={() => setLoginModalOpen(true)} className="inline-flex btn-ghost !py-[9px] !px-3 sm:!px-4 !text-[9px]">Ingresar</button>
-                <button onClick={() => setSellerWizardOpen(true)} className="btn-primary !py-[9px] !px-3 sm:!px-4 !text-[9px] whitespace-nowrap">Listar</button>
+                <button onClick={() => setLoginModalOpen(true)} className="btn-primary !py-[9px] !px-3 sm:!px-4 !text-[9px] whitespace-nowrap">Listar</button>
               </div>
             )}
           </div>
