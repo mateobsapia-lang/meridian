@@ -1,24 +1,46 @@
-import tailwindcss from '@tailwindcss/vite';
-import react from '@vitejs/plugin-react';
-import path from 'path';
-import {defineConfig, loadEnv} from 'vite';
+# Configurar notificaciones por email
 
-export default defineConfig(({mode}) => {
-  const env = loadEnv(mode, '.', '');
-  return {
-    plugins: [react(), tailwindcss()],
-    define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-    },
-    resolve: {
-      alias: {
-        '@': path.resolve(__dirname, '.'),
-      },
-    },
-    server: {
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
-      hmr: process.env.DISABLE_HMR !== 'true',
-    },
-  };
-});
+Cuando alguien envía una empresa, querés recibir un email. Usamos **EmailJS** (gratis, 200 emails/mes).
+
+## Pasos
+
+1. **Crear cuenta** en https://www.emailjs.com
+
+2. **Agregar servicio de email**
+   - Email Services → Add New Service → Gmail
+   - Conectar tu cuenta de Gmail
+   - Copiar el **Service ID**
+
+3. **Crear template**
+   - Email Templates → Create New Template
+   - Diseñar el email con estas variables:
+   ```
+   Nuevo deal recibido: {{deal_id}}
+   Empresa: {{empresa}}
+   Industria: {{industry}}
+   Región: {{region}}
+   Asking Price: {{asking}}
+   Representante: {{from_name}}
+   Email contacto: {{contact_email}}
+   Ver en app: {{link}}
+   ```
+   - Copiar el **Template ID**
+
+4. **Obtener Public Key**
+   - Account → General → Public Key
+
+5. **Pegar en el código**
+   - Abrir `src/lib/notifications.ts` en GitHub
+   - Reemplazar:
+     - `TU_SERVICE_ID` → tu Service ID
+     - `TU_TEMPLATE_ID` → tu Template ID  
+     - `TU_PUBLIC_KEY` → tu Public Key
+     - `TU_EMAIL@gmail.com` → tu email
+
+6. **Instalar EmailJS** — agregar al package.json:
+   ```json
+   "@emailjs/browser": "^4.0.0"
+   ```
+   O editar `package.json` en GitHub y agregar esa línea en dependencies.
+
+Listo — cada vez que alguien complete el SellerWizard y sea usuario logueado, te llega un email.
