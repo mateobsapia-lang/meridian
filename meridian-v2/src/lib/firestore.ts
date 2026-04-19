@@ -41,7 +41,9 @@ export async function createDeal(data: Omit<Deal, 'id' | 'createdAt' | 'updatedA
   });
   return id;
 }
-
+export async function updateDeal(dealId: string, data: Partial<Deal>): Promise<void> {
+  await updateDoc(doc(db, 'deals', dealId), { ...data, updatedAt: serverTimestamp() });
+}
 export async function updateDealStatus(dealId: string, status: DealStatus): Promise<void> {
   await updateDoc(doc(db, 'deals', dealId), {
     status, updatedAt: serverTimestamp(),
