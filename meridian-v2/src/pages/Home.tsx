@@ -122,16 +122,17 @@ export function Home() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-border-strong border border-border-strong shadow-xl">
-            {featured.map((deal, i) => (
-              <motion.div key={i}
-                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }} viewport={{ once: true }}
-                className={`bg-paper p-6 flex flex-col gap-4 group transition-colors relative ${
-                  deal.placeholder ? 'cursor-default' : 'hover:bg-paper-mid cursor-pointer'
-                }`}
-                onClick={() => !deal.placeholder && openNdaModal(deal.id)}
-              >
+          <div className="-mx-5 sm:mx-0">
+            <div className="flex overflow-x-auto scrollbar-hide md:grid md:grid-cols-3 gap-4 md:gap-px md:bg-border-strong border-y md:border border-border-strong md:shadow-xl snap-x snap-mandatory py-4 px-5 sm:px-0 md:py-0">
+              {featured.map((deal, i) => (
+                <motion.div key={i}
+                  initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }} viewport={{ once: true }}
+                  className={`w-[280px] shrink-0 md:w-auto md:min-w-0 snap-center bg-paper p-6 flex flex-col gap-4 group transition-colors relative border md:border-0 border-border-strong shadow-sm md:shadow-none ${
+                    deal.placeholder ? 'cursor-default' : 'hover:bg-paper-mid cursor-pointer'
+                  }`}
+                  onClick={() => !deal.placeholder && openNdaModal(deal.id)}
+                >
                 {deal.placeholder && (
                   <div className="absolute top-3 right-3 font-mono text-[8px] uppercase tracking-widest border border-border-strong px-2 py-0.5 text-ink-mute">
                     Ejemplo
@@ -168,6 +169,9 @@ export function Home() {
                 )}
               </motion.div>
             ))}
+              {/* Spacer on mobile to ensure last card doesn't stick to the screen edge */}
+              <div className="w-1 shrink-0 md:hidden"></div>
+            </div>
           </div>
         </div>
       </section>
@@ -179,7 +183,7 @@ export function Home() {
             <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-accent mb-2">Herramienta gratuita</div>
             <h2 className="font-serif text-[28px] md:text-[36px] font-bold text-ink tracking-[-0.02em]">Estimá el valor de tu empresa</h2>
           </div>
-          <div className="max-w-2xl mx-auto">
+          <div className="max-w-5xl mx-auto w-full">
             <ValuationCalculator />
           </div>
         </div>
