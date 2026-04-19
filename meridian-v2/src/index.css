@@ -20,7 +20,7 @@
 
 @layer base {
   body {
-    @apply font-sans bg-paper text-ink antialiased;
+    @apply font-sans bg-paper text-ink antialiased overflow-x-hidden max-w-[100vw];
   }
 }
 
