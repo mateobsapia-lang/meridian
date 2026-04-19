@@ -18,12 +18,14 @@ import { NDAModal } from './modals/NDAModal';
 import { ProfileModal } from './modals/ProfileModal';
 import { ContactModal } from './modals/ContactModal';
 import { LeadCaptureModal } from './modals/LeadCaptureModal';
+import { WelcomeModal } from './modals/WelcomeModal';
 
 export default function App() {
   return (
     <AppProvider>
       <BrowserRouter>
         <ScrollToTop />
+        <WelcomeModal />
         <div className="flex flex-col min-h-screen">
           <Header />
           <main className="flex-1">
