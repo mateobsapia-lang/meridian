@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #0D0D0B;
+  --color-ink-soft: #4A4A46;
+  --color-ink-mute: #9A9A94;
+  --color-paper: #FAFAF7;
+  --color-paper-deep: #F2F1EC;
+  --color-paper-mid: #E8E7E0;
+  --color-accent: #0F6E56;
+  --color-accent-light: #E1F5EE;
+  --color-gold: #B8952A;
+  --color-border-subtle: rgba(13, 13, 11, 0.10);
+  --color-border-strong: rgba(13, 13, 11, 0.18);
+  
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  --font-mono: "DM Mono", monospace;
+}
+
+@layer base {
+  body {
+    @apply font-sans bg-paper text-ink antialiased;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-block bg-ink text-paper text-[10px] font-medium tracking-[0.15em] uppercase py-[14px] px-[28px] transition-colors duration-200 hover:bg-accent cursor-pointer text-center;
+  }
+  .btn-ghost {
+    @apply inline-block border border-border-strong text-ink text-[10px] font-medium tracking-[0.15em] uppercase py-[13px] px-[28px] transition-all duration-200 hover:bg-paper-deep hover:border-ink cursor-pointer text-center;
+  }
+  .btn-accent {
+    @apply inline-block bg-accent text-white text-[10px] font-medium tracking-[0.15em] uppercase py-[14px] px-[28px] transition-colors duration-200 hover:bg-[#0a5240] cursor-pointer text-center disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+  .eyebrow {
+    @apply font-sans text-[10px] font-medium tracking-[0.14em] uppercase text-ink-mute;
+  }
+  .eyebrow-accent {
+    @apply text-accent;
+  }
+  .container-custom {
+    @apply max-w-[1200px] mx-auto px-5 sm:px-8 md:px-[48px];
+  }
+}
+
+/* Ticker Animation */
+@keyframes tick {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-tick {
+  animation: tick 40s linear infinite;
+}
+.animate-tick:hover {
+  animation-play-state: paused;
+}
+
+/* Badge Pulse */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.animate-pulse-dot {
+  animation: pulse-dot 2s infinite;
+}
