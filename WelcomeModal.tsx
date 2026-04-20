@@ -1,105 +1,92 @@
-{
-  "entities": {
-    "deal": {
-      "title": "Deal",
-      "description": "Represents a company listing submitted by a seller.",
-      "type": "object",
-      "properties": {
-        "status": {
-          "type": "string",
-          "enum": ["pending", "published", "rejected"],
-          "description": "Status of the deal. Sellers submit as pending."
+import React, { useState } from 'react';
+import { Modal } from '../components/Modal';
+import { useAppContext } from '../AppContext';
+import { motion } from 'motion/react';
+
+export function ContactModal() {
+  const { isContactModalOpen, setContactModalOpen, showToast } = useAppContext();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const nombre = formData.get('nombre') as string;
+    const email = formData.get('email') as string;
+    const mensaje = formData.get('mensaje') as string;
+    
+    try {
+      await fetch('https://formsubmit.co/ajax/mateobsapia@gmail.com', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
-        "ownerId": {
-          "type": "string",
-          "description": "Auth UID of the seller who submitted the deal."
-        },
-        "nombreFantasia": {
-          "type": "string"
-        },
-        "cuit": {
-          "type": "string"
-        },
-        "industria": {
-          "type": "string"
-        },
-        "region": {
-          "type": "string"
-        },
-        "descripcion": {
-          "type": "string"
-        },
-        "revenue": {
-          "type": "number"
-        },
-        "ebitda": {
-          "type": "number"
-        },
-        "crecimiento": {
-          "type": "string"
-        },
-        "deuda": {
-          "type": "number"
-        },
-        "askingPrice": {
-          "type": "number"
-        },
-        "tipoSocietario": {
-          "type": "string"
-        },
-        "jurisdiccion": {
-          "type": "string"
-        },
-        "representante": {
-          "type": "string"
-        },
-        "telefono": {
-          "type": "string"
-        },
-        "email": {
-          "type": "string"
-        },
-        "createdAt": {
-          "type": "timestamp"
-        },
-        "updatedAt": {
-          "type": "timestamp"
-        }
-      },
-      "required": ["status", "ownerId", "nombreFantasia", "createdAt"]
-    },
-    "user": {
-      "title": "User",
-      "description": "A user of the application",
-      "type": "object",
-      "properties": {
-        "role": {
-          "type": "string",
-          "enum": ["seller", "buyer", "admin"],
-          "description": "User's role."
-        },
-        "email": {
-          "type": "string"
-        },
-        "initials": {
-          "type": "string"
-        }
-      },
-      "required": ["role", "email"]
+        body: JSON.stringify({
+          _subject: `Contacto Meridian: ${nombre}`,
+          Nombre: nombre,
+          Email: email,
+          Mensaje: mensaje
+        })
+      });
+    } catch (error) {
+      console.error(error);
     }
-  },
-  "firestore": {
-    "/deals/{dealId}": {
-      "schema": {
-        "$ref": "#/entities/deal"
-      },
-      "description": "Stores company listings."
-    },
-    "/users/{userId}": {
-      "schema": {
-        "$ref": "#/entities/user"
-      },
-      "description": "Stores user profiles and roles."
-    }
-  }
+
+    setIsSubmitting(false);
+    setContactModalOpen(false);
+    showToast("Mensaje enviado correctamente. Nos pondremos en contacto a la brevedad.");
+  };
+
+  return (
+    <Modal 
+      isOpen={isContactModalOpen} 
+      onClose={() => setContactModalOpen(false)} 
+      title="Contacto"
+    >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div>
+          <label className="block text-[10px] font-medium tracking-[0.1em] uppercase text-ink-mute mb-2">Nombre Completo</label>
+          <input 
+            type="text" 
+            name="nombre"
+            required 
+            className="w-full border border-border-strong bg-paper px-4 py-3 text-[13px] outline-none focus:border-ink transition-colors" 
+          />
+        </div>
+        <div>
+          <label className="block text-[10px] font-medium tracking-[0.1em] uppercase text-ink-mute mb-2">Correo electrónico</label>
+          <input 
+            type="email" 
+            name="email"
+            required 
+            className="w-full border border-border-strong bg-paper px-4 py-3 text-[13px] outline-none focus:border-ink transition-colors" 
+            placeholder="ejemplo@empresa.com"
+          />
+        </div>
+        <div>
+          <label className="block text-[10px] font-medium tracking-[0.1em] uppercase text-ink-mute mb-2">Mensaje</label>
+          <textarea 
+            name="mensaje"
+            required 
+            rows={4}
+            className="w-full border border-border-strong bg-paper px-4 py-3 text-[13px] outline-none focus:border-ink transition-colors resize-none" 
+          />
+        </div>
+
+        <motion.button 
+          whileTap={{ scale: 0.97 }}
+          whileHover={{ scale: 1.01 }}
+          transition={{ duration: 0.2 }}
+          type="submit" 
+          disabled={isSubmitting} 
+          className="btn-primary mt-2 disabled:opacity-50"
+        >
+          {isSubmitting ? 'Enviando...' : 'Enviar Mensaje'}
+        </motion.button>
+      </form>
+    </Modal>
+  );
 }

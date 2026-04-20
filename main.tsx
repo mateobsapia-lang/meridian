@@ -1,85 +1,147 @@
-import { motion } from 'motion/react';
-import { useAppContext } from '../AppContext';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { auth, db } from './firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { subscribeToNotifications } from './lib/firestore';
+import type { AppUser, Notification } from './types';
 
-const TEAM = [
-  { initials: 'MS', name: 'Mateo Sapia', role: 'Fundador & CEO', bio: 'Empresario con trayectoria en M&A y mercados privados en Argentina y Latam.' },
-  { initials: 'AN', name: 'Analista Senior', role: 'Due Diligence', bio: 'Especialista en valuación de PyMEs y estructuración de transacciones.' },
-  { initials: 'LG', name: 'Legal', role: 'Compliance & NDA', bio: 'Abogada corporativa con foco en transacciones M&A y derecho societario.' },
-];
+type AppContextType = {
+  user: AppUser | null;
+  loading: boolean;
+  login: (user: AppUser) => void;
+  logout: () => void;
 
-const VALUES = [
-  { title: 'Confidencialidad absoluta', desc: 'Cada deal está protegido por NDA institucional. La información nunca llega a quien no debe.' },
-  { title: 'Métricas auditadas', desc: 'Verificamos cada número antes de publicar. Los compradores toman decisiones con datos reales.' },
-  { title: 'Proceso estructurado', desc: 'Seguimos las mismas fases que los bancos de inversión globales, adaptadas al mercado local.' },
-  { title: 'Alineación de intereses', desc: 'Solo cobramos al cierre. Nuestro éxito depende del tuyo.' },
-];
+  // Modals
+  isLoginModalOpen: boolean;
+  setLoginModalOpen: (open: boolean) => void;
+  isSellerWizardOpen: boolean;
+  setSellerWizardOpen: (open: boolean) => void;
+  isBuyerWizardOpen: boolean;
+  setBuyerWizardOpen: (open: boolean) => void;
+  isProfileModalOpen: boolean;
+  setProfileModalOpen: (open: boolean) => void;
+  isNdaModalOpen: boolean;
+  setNdaModalOpen: (open: boolean) => void;
+  selectedDealId: string | null;
+  openNdaModal: (dealId: string) => void;
+  isContactModalOpen: boolean;
+  setContactModalOpen: (open: boolean) => void;
+  isLeadModalOpen: boolean;
+  setLeadModalOpen: (open: boolean) => void;
 
-export function Nosotros() {
-  const { setContactModalOpen } = useAppContext();
+  // Notifications
+  notifications: Notification[];
+  unreadCount: number;
+  markRead: (id: string) => void;
+
+  // Toast
+  toastMessage: string | null;
+  showToast: (msg: string) => void;
+};
+
+const AppContext = createContext<AppContextType | undefined>(undefined);
+
+export function AppProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<AppUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoginModalOpen, setLoginModalOpen] = useState(false);
+  const [isSellerWizardOpen, setSellerWizardOpen] = useState(false);
+  const [isBuyerWizardOpen, setBuyerWizardOpen] = useState(false);
+  const [isProfileModalOpen, setProfileModalOpen] = useState(false);
+  const [isNdaModalOpen, setNdaModalOpen] = useState(false);
+  const [isContactModalOpen, setContactModalOpen] = useState(false);
+  const [isLeadModalOpen, setLeadModalOpen] = useState(false);
+  const [selectedDealId, setSelectedDealId] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Auth listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const userRef = doc(db, 'users', firebaseUser.uid);
+        const userSnap = await getDoc(userRef);
+        const name = firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Usuario';
+        const initials = name.slice(0, 2).toUpperCase();
+        let role: AppUser['role'] = 'seller';
+        let buyerProfile = undefined;
+
+        if (userSnap.exists()) {
+          const data = userSnap.data();
+          role = data.role ?? 'seller';
+          buyerProfile = data.buyerProfile;
+        } else {
+          await setDoc(userRef, { email: firebaseUser.email, role: 'seller', createdAt: new Date() });
+        }
+
+        setUser({ uid: firebaseUser.uid, name, initials, email: firebaseUser.email || '', role, buyerProfile });
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
+  // Notifications subscription
+  useEffect(() => {
+    if (!user) { setNotifications([]); return; }
+    const unsub = subscribeToNotifications(user.uid, setNotifications);
+    return unsub;
+  }, [user?.uid]);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const markRead = async (id: string) => {
+    const { markNotificationRead } = await import('./lib/firestore');
+    await markNotificationRead(id);
+  };
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const login = (newUser: AppUser) => {
+    setUser(newUser);
+    setLoginModalOpen(false);
+    showToast(`Bienvenido, ${newUser.name}`);
+  };
+
+  const logout = async () => {
+    await signOut(auth);
+    setUser(null);
+    setProfileModalOpen(false);
+    showToast('Sesión cerrada');
+  };
+
+  const openNdaModal = (dealId: string) => {
+    if (!user) { setLoginModalOpen(true); return; }
+    setSelectedDealId(dealId);
+    setNdaModalOpen(true);
+  };
 
   return (
-    <div className="animate-in fade-in duration-500">
-      {/* Hero */}
-      <section className="bg-paper-deep pt-16 pb-20 border-b border-border-strong">
-        <div className="container-custom max-w-3xl">
-          <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-accent mb-4">Quiénes Somos</div>
-          <h1 className="font-serif text-[36px] sm:text-[48px] md:text-[60px] font-bold leading-[0.95] tracking-[-0.025em] text-ink mb-6">
-            Construimos el mercado privado que Argentina necesita
-          </h1>
-          <p className="text-[16px] text-ink-soft leading-[1.65] font-light max-w-2xl">
-            Meridian nació de la observación de que miles de PyMEs argentinas rentables no tienen acceso a un proceso serio de venta. La informalidad, la falta de estructuración y la ausencia de confidencialidad destruyen valor en cada transacción.
-          </p>
-        </div>
-      </section>
-
-      {/* Valores */}
-      <section className="py-16 bg-paper border-b border-border-strong">
-        <div className="container-custom">
-          <h2 className="font-serif text-[28px] md:text-[36px] font-bold text-ink tracking-[-0.02em] mb-10">Nuestros principios</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border-strong border border-border-strong">
-            {VALUES.map((v, i) => (
-              <motion.div key={i} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ delay: i * 0.1 }} viewport={{ once: true }}
-                className="bg-paper p-8">
-                <div className="w-8 h-0.5 bg-accent mb-6" />
-                <h3 className="font-serif text-[18px] font-bold text-ink mb-3">{v.title}</h3>
-                <p className="text-[13px] text-ink-soft leading-relaxed">{v.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Equipo */}
-      <section className="py-16 bg-paper-deep border-b border-border-strong">
-        <div className="container-custom">
-          <h2 className="font-serif text-[28px] md:text-[36px] font-bold text-ink tracking-[-0.02em] mb-10">El equipo</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {TEAM.map((m, i) => (
-              <div key={i} className="border border-border-strong bg-paper p-6 flex flex-col gap-4">
-                <div className="w-14 h-14 rounded-full bg-accent text-white flex items-center justify-center font-serif text-[20px] font-bold">
-                  {m.initials}
-                </div>
-                <div>
-                  <div className="font-serif text-[17px] font-bold text-ink">{m.name}</div>
-                  <div className="font-mono text-[10px] text-accent tracking-wider mt-0.5">{m.role}</div>
-                </div>
-                <p className="text-[13px] text-ink-soft leading-relaxed">{m.bio}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-16 bg-ink text-white text-center">
-        <div className="container-custom">
-          <h2 className="font-serif text-[28px] md:text-[40px] font-bold mb-4">¿Querés hablar con nosotros?</h2>
-          <p className="text-white/60 mb-8 text-[15px]">Respondemos todas las consultas en menos de 24 horas hábiles.</p>
-          <button onClick={() => setContactModalOpen(true)} className="btn-primary !bg-white !text-ink hover:!bg-white/90">
-            Contactarnos
-          </button>
-        </div>
-      </section>
-    </div>
+    <AppContext.Provider value={{
+      user, loading, login, logout,
+      isLoginModalOpen, setLoginModalOpen,
+      isSellerWizardOpen, setSellerWizardOpen,
+      isBuyerWizardOpen, setBuyerWizardOpen,
+      isProfileModalOpen, setProfileModalOpen,
+      isNdaModalOpen, setNdaModalOpen,
+      isContactModalOpen, setContactModalOpen,
+      isLeadModalOpen, setLeadModalOpen,
+      selectedDealId, openNdaModal,
+      notifications, unreadCount, markRead,
+      toastMessage, showToast,
+    }}>
+      {children}
+    </AppContext.Provider>
   );
+}
+
+export function useAppContext() {
+  const ctx = useContext(AppContext);
+  if (!ctx) throw new Error('useAppContext must be used within AppProvider');
+  return ctx;
 }

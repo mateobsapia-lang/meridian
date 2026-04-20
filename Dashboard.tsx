@@ -1,175 +1,61 @@
-import { useState, useEffect } from 'react';
-import { useSEO, trackEvent } from '../lib/seo';
+import React, { useState } from 'react';
+import { Modal } from '../components/Modal';
 import { useAppContext } from '../AppContext';
-import { useNavigate } from 'react-router-dom';
-import { getPublishedDeals } from '../lib/firestore';
-import { defaultMatchScore, calculateMatchScore } from '../lib/matching';
-import type { Deal } from '../types';
+import { auth } from '../firebase';
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 
-const INDUSTRIES = ['Todas', 'SaaS / Tech', 'Agro', 'Manufactura', 'Servicios', 'Retail', 'Salud'];
+export function LoginModal() {
+  const { isLoginModalOpen, setLoginModalOpen, login, showToast } = useAppContext();
+  const [isCargando, setIsCargando] = useState(false);
 
-const STATUS_LABEL: Record<string, string> = {
-  published: 'Activo',
-  nda_phase: 'En NDA',
-  loi_received: 'IOI Recibido',
-  closing: 'En Cierre',
-  closed: 'Cerrado',
-};
-
-const STATUS_COLOR: Record<string, string> = {
-  published: 'bg-[#4ade80]',
-  nda_phase: 'bg-gold',
-  loi_received: 'bg-accent',
-  closing: 'bg-amber-400',
-  closed: 'bg-ink-mute',
-};
-
-export function Mercado() {
-  const { user, showToast, openNdaModal } = useAppContext();
-  const navigate = useNavigate();
-  useSEO('Mercado de Empresas', 'Explorá empresas PyME argentinas en venta. Métricas auditadas, NDA digital. Compradores verificados con ticket real.');
-
-  const [deals, setDeals] = useState<Deal[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('Todas');
-  const [sortBy, setSortBy] = useState<'match' | 'asking' | 'ebitda' | 'crecimiento'>('match');
-  const [time, setTime] = useState('');
-
-  useEffect(() => {
-    const updateTime = () => setTime('Actualizado · ' + new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    getPublishedDeals()
-      .then(setDeals)
-      .catch(() => showToast('Error al cargar el mercado'))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const getScore = (deal: Deal) =>
-    user?.buyerProfile ? calculateMatchScore(deal, user.buyerProfile) : defaultMatchScore(deal);
-
-  const filtered = deals
-    .filter(d => filter === 'Todas' || d.industria.includes(filter))
-    .sort((a, b) => {
-      if (sortBy === 'match') return getScore(b) - getScore(a);
-      if (sortBy === 'asking') return b.askingPrice - a.askingPrice;
-      if (sortBy === 'ebitda') return b.ebitda - a.ebitda;
-      if (sortBy === 'crecimiento') return b.crecimiento - a.crecimiento;
-      return 0;
-    });
-
-  const fmtUSD = (n: number) => `USD ${(n / 1_000_000).toFixed(1)}M`;
+  const handleGoogleLogin = async () => {
+    setIsCargando(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      login({
+        uid: result.user.uid,
+        name: result.user.displayName || 'Usuario',
+        initials: (result.user.displayName || 'U').charAt(0).toUpperCase(),
+        email: result.user.email || '',
+        role: 'seller'
+      });
+      setLoginModalOpen(false);
+    } catch (error: any) {
+      console.error(error);
+      showToast('Error al iniciar sesión con Google.');
+    } finally {
+      setIsCargando(false);
+    }
+  };
 
   return (
-    <div className="animate-in fade-in duration-500 bg-paper-deep min-h-screen pb-20">
-      <section className="pt-10 md:pt-16 pb-6">
-        <div className="container-custom">
-          <div className="flex items-end justify-between mb-2">
-            <div>
-              <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-accent mb-2">Mercado primario</div>
-              <h2 className="font-serif text-[28px] sm:text-[32px] md:text-[40px] font-bold text-ink tracking-[-0.02em]">Cotizaciones del día</h2>
-            </div>
-            <div className="font-mono text-[10px] text-ink-mute">{time}</div>
-          </div>
-        </div>
-      </section>
+    <Modal 
+      isOpen={isLoginModalOpen} 
+      onClose={() => setLoginModalOpen(false)} 
+      title="Ingresar a Meridian"
+    >
+      <div className="flex flex-col gap-6">
+        <p className="text-[13px] text-ink-soft leading-relaxed text-center">
+          Para proteger la confidencialidad de nuestro mercado, solo permitimos accesos verificados institucionales.
+        </p>
 
-      {/* FILTER BAR */}
-      <div className="bg-paper-deep border-y border-border-strong py-3">
-        <div className="container-custom">
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-[9px] font-medium tracking-[0.14em] uppercase text-ink-mute">Industria</span>
-            {INDUSTRIES.map(ind => (
-              <button key={ind} onClick={() => setFilter(ind)}
-                className={`text-[10px] font-medium py-1.5 px-3.5 border transition-all duration-150 tracking-[0.04em] ${
-                  filter === ind ? 'bg-ink text-paper border-ink' : 'border-border-strong bg-paper text-ink-soft hover:bg-ink hover:text-paper hover:border-ink'
-                }`}>
-                {ind}
-              </button>
-            ))}
-            <div className="ml-auto flex items-center gap-3">
-              <span className="text-[9px] font-mono text-ink-mute">Ordenar por:</span>
-              <select value={sortBy} onChange={e => setSortBy(e.target.value as any)}
-                className="text-[10px] font-mono border border-border-strong bg-paper text-ink px-2 py-1">
-                <option value="match">Match %</option>
-                <option value="asking">Asking Price</option>
-                <option value="ebitda">EBITDA</option>
-                <option value="crecimiento">Crecimiento</option>
-              </select>
-              <span className="font-mono text-[10px] text-ink-mute">{filtered.length} resultados</span>
-            </div>
-          </div>
-        </div>
-      </div>
+        <button 
+          type="button" 
+          onClick={handleGoogleLogin} 
+          disabled={isCargando}
+          className="btn-primary flex items-center justify-center gap-3 w-full"
+        >
+          <svg className="w-4 h-4 bg-white rounded-full p-[2px]" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          {isCargando ? 'Conectando...' : 'Continuar con Google'}
+        </button>
 
-      {/* TABLE */}
-      <div className="container-custom mt-6 overflow-x-auto">
-        {loading ? (
-          <div className="py-24 text-center">
-            <div className="font-mono text-[11px] text-ink-mute tracking-widest animate-pulse">CARGANDO MERCADO...</div>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="py-24 text-center border border-border-strong bg-paper">
-            <div className="font-serif text-[22px] text-ink mb-2">Sin resultados</div>
-            <div className="text-ink-mute text-sm">No hay deals publicados en esta categoría aún.</div>
-          </div>
-        ) : (
-          <table className="w-full border-collapse border border-border-strong min-w-[1000px] bg-paper">
-            <thead>
-              <tr>
-                {['ID Deal','Industria','Región','Revenue','EBITDA','Margen','Crec.','Múltiplo','Asking','Match','Estado',''].map(h => (
-                  <th key={h} className="text-[9px] font-medium tracking-[0.14em] uppercase text-ink-mute text-left py-2.5 px-3.5 border-b border-border-strong whitespace-nowrap">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((d) => {
-                const score = getScore(d);
-                const margin = ((d.ebitda / d.revenue) * 100).toFixed(0);
-                const multiple = d.multiple ?? (d.askingPrice / d.ebitda).toFixed(1);
-                return (
-                  <tr key={d.id} className="hover:bg-paper-mid transition-colors group cursor-pointer" onClick={() => navigate(`/deal/${d.id}`)}>
-                    <td className="text-[11px] font-mono py-3 px-3.5 border-b border-border-subtle text-ink">{d.id}</td>
-                    <td className="py-3 px-3.5 border-b border-border-subtle">
-                      <span className="inline-block text-[9px] font-medium tracking-[0.08em] uppercase py-0.5 px-2 border border-border-strong text-ink-soft">{d.industria}</span>
-                    </td>
-                    <td className="text-[12px] py-3 px-3.5 border-b border-border-subtle text-ink">{d.region}</td>
-                    <td className="text-[11px] font-mono text-right py-3 px-3.5 border-b border-border-subtle text-ink">{fmtUSD(d.revenue)}</td>
-                    <td className="text-[11px] font-mono text-right py-3 px-3.5 border-b border-border-subtle text-ink">{fmtUSD(d.ebitda)}</td>
-                    <td className="text-[11px] font-mono text-right py-3 px-3.5 border-b border-border-subtle text-ink">{margin}%</td>
-                    <td className={`text-[11px] font-mono text-right py-3 px-3.5 border-b border-border-subtle ${d.crecimiento > 20 ? 'text-[#16a34a]' : 'text-ink'}`}>
-                      +{d.crecimiento}%
-                    </td>
-                    <td className="text-[11px] font-mono text-right py-3 px-3.5 border-b border-border-subtle text-ink">{multiple}×</td>
-                    <td className="text-[11px] font-mono font-medium text-right py-3 px-3.5 border-b border-border-subtle text-ink">{fmtUSD(d.askingPrice)}</td>
-                    <td className="py-3 px-3.5 border-b border-border-subtle">
-                      <span className="inline-block font-mono text-[10px] font-medium py-0.5 px-2 bg-accent-light text-accent border border-accent/20">{score}%</span>
-                    </td>
-                    <td className="text-[12px] py-3 px-3.5 border-b border-border-subtle">
-                      <div className="flex items-center gap-1.5">
-                        <span className={`w-[7px] h-[7px] rounded-full inline-block ${STATUS_COLOR[d.status] ?? 'bg-ink-mute'}`}></span>
-                        {STATUS_LABEL[d.status] ?? d.status}
-                      </div>
-                    </td>
-                    <td className="text-right py-3 px-3.5 border-b border-border-subtle" onClick={e => e.stopPropagation()}>
-                      <button onClick={() => openNdaModal(d.id)}
-                        className="text-[9px] font-medium tracking-[0.1em] uppercase text-accent hover:underline whitespace-nowrap">
-                        Ver Teaser →
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
       </div>
-    </div>
+    </Modal>
   );
 }

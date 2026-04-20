@@ -1,92 +1,25 @@
-import React, { useState } from 'react';
-import { Modal } from '../components/Modal';
-import { useAppContext } from '../AppContext';
-import { motion } from 'motion/react';
-
-export function ContactModal() {
-  const { isContactModalOpen, setContactModalOpen, showToast } = useAppContext();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-    const nombre = formData.get('nombre') as string;
-    const email = formData.get('email') as string;
-    const mensaje = formData.get('mensaje') as string;
-    
-    try {
-      await fetch('https://formsubmit.co/ajax/mateobsapia@gmail.com', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          _subject: `Contacto Meridian: ${nombre}`,
-          Nombre: nombre,
-          Email: email,
-          Mensaje: mensaje
-        })
-      });
-    } catch (error) {
-      console.error(error);
-    }
-
-    setIsSubmitting(false);
-    setContactModalOpen(false);
-    showToast("Mensaje enviado correctamente. Nos pondremos en contacto a la brevedad.");
-  };
-
-  return (
-    <Modal 
-      isOpen={isContactModalOpen} 
-      onClose={() => setContactModalOpen(false)} 
-      title="Contacto"
-    >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div>
-          <label className="block text-[10px] font-medium tracking-[0.1em] uppercase text-ink-mute mb-2">Nombre Completo</label>
-          <input 
-            type="text" 
-            name="nombre"
-            required 
-            className="w-full border border-border-strong bg-paper px-4 py-3 text-[13px] outline-none focus:border-ink transition-colors" 
-          />
-        </div>
-        <div>
-          <label className="block text-[10px] font-medium tracking-[0.1em] uppercase text-ink-mute mb-2">Correo electrónico</label>
-          <input 
-            type="email" 
-            name="email"
-            required 
-            className="w-full border border-border-strong bg-paper px-4 py-3 text-[13px] outline-none focus:border-ink transition-colors" 
-            placeholder="ejemplo@empresa.com"
-          />
-        </div>
-        <div>
-          <label className="block text-[10px] font-medium tracking-[0.1em] uppercase text-ink-mute mb-2">Mensaje</label>
-          <textarea 
-            name="mensaje"
-            required 
-            rows={4}
-            className="w-full border border-border-strong bg-paper px-4 py-3 text-[13px] outline-none focus:border-ink transition-colors resize-none" 
-          />
-        </div>
-
-        <motion.button 
-          whileTap={{ scale: 0.97 }}
-          whileHover={{ scale: 1.01 }}
-          transition={{ duration: 0.2 }}
-          type="submit" 
-          disabled={isSubmitting} 
-          className="btn-primary mt-2 disabled:opacity-50"
-        >
-          {isSubmitting ? 'Enviando...' : 'Enviar Mensaje'}
-        </motion.button>
-      </form>
-    </Modal>
-  );
-}
+export const deals = [
+  { 
+    id: 'MRD-2501', industry: 'SaaS / Tech', region: 'CABA', revenue: 'USD 3.2M', ebitda: 'USD 910K', margin: '28%', growth: '+35%', multiple: '7.8×', asking: 'USD 7.1M', match: 92, status: 'active', geo: 'Buenos Aires', 
+    desc: 'Plataforma B2B de gestión para PYMEs industriales. MRR estable, churn inferior al 2% anual. Contratos anuales con renovación automática.',
+    highlights: ['94% de ingresos recurrentes (ARR)', 'CAC recuperado en 4.2 meses', 'Equipo de desarrollo in-house'],
+    financials: [ { year: '2022', rev: 1.8, ebitda: 0.3 }, { year: '2023', rev: 2.4, ebitda: 0.55 }, { year: '2024', rev: 3.2, ebitda: 0.91 } ]
+  },
+  { 
+    id: 'MRD-2502', industry: 'Agro', region: 'Córdoba', revenue: 'USD 5.1M', ebitda: 'USD 1.4M', margin: '27%', growth: '+18%', multiple: '4.5×', asking: 'USD 6.3M', match: 78, status: 'active', geo: 'Córdoba', 
+    desc: 'Empresa agroexportadora con contratos de largo plazo. Activos propios. Certificación orgánica vigente.',
+    highlights: ['Exportaciones representan el 65% del revenue', '1,200 hectáreas propias, 800 arrendadas', 'Acuerdos forward ya firmados para 2026'],
+    financials: [ { year: '2022', rev: 3.6, ebitda: 0.9 }, { year: '2023', rev: 4.3, ebitda: 1.1 }, { year: '2024', rev: 5.1, ebitda: 1.4 } ]
+  },
+  { 
+    id: 'MRD-2503', industry: 'Salud', region: 'CABA', revenue: 'USD 2.8M', ebitda: 'USD 680K', margin: '24%', growth: '+22%', multiple: '6.2×', asking: 'USD 4.2M', match: 85, status: 'nda', geo: 'Buenos Aires', 
+    desc: 'Red de centros de diagnóstico por imágenes. Equipamiento propio amortizado. Convenios con prepagas.',
+    highlights: ['Equipamiento propio 100% amortizado', 'Convenios vigentes con 15 Obras Sociales y Prepagas', 'Ubicaciones premium con contratos a 10 años'],
+    financials: [ { year: '2022', rev: 1.9, ebitda: 0.4 }, { year: '2023', rev: 2.3, ebitda: 0.52 }, { year: '2024', rev: 2.8, ebitda: 0.68 } ]
+  },
+  { id: 'MRD-2504', industry: 'Manufactura', region: 'Santa Fe', revenue: 'USD 7.2M', ebitda: 'USD 1.1M', margin: '15%', growth: '+9%', multiple: '3.8×', asking: 'USD 4.2M', match: 61, status: 'active', geo: 'Santa Fe', desc: 'Manufactura de insumos para construcción. Clientes institucionales. Planta propia.', highlights: ['Planta industrial de 5,000m2 propia', 'Tecnología de extrusión renovada en 2021', 'Cartera de más de 400 corralones adheridos'], financials: [ { year: '2022', rev: 6.1, ebitda: 0.85 }, { year: '2023', rev: 6.6, ebitda: 0.95 }, { year: '2024', rev: 7.2, ebitda: 1.1 } ] },
+  { id: 'MRD-2505', industry: 'Retail', region: 'Buenos Aires', revenue: 'USD 4.4M', ebitda: 'USD 620K', margin: '14%', growth: '+12%', multiple: '3.2×', asking: 'USD 2.0M', match: 44, status: 'active', geo: 'GBA', desc: 'Cadena de retail especializado, 8 puntos de venta propios, marca registrada con 15 años de trayectoria.', highlights: ['8 locales propios en ubicaciones estratégicas', 'Marca registrada con alto top of mind regional', 'Plataforma e-commerce representa 18% de ventas'], financials: [ { year: '2022', rev: 3.5, ebitda: 0.45 }, { year: '2023', rev: 3.9, ebitda: 0.55 }, { year: '2024', rev: 4.4, ebitda: 0.62 } ] },
+  { id: 'MRD-2506', industry: 'Servicios', region: 'CABA', revenue: 'USD 1.9M', ebitda: 'USD 540K', margin: '28%', growth: '+41%', multiple: '8.1×', asking: 'USD 4.4M', match: 88, status: 'active', geo: 'Buenos Aires', desc: 'Consultora de servicios profesionales B2B. Contratos recurrentes. Equipo senior de 22 personas.', highlights: ['Retención de clientes corporativos > 90%', 'Costo de estructura altamente flexibilizado', 'Management dispuesto a quedarse 24 meses post-deal'], financials: [ { year: '2022', rev: 1.0, ebitda: 0.2 }, { year: '2023', rev: 1.35, ebitda: 0.35 }, { year: '2024', rev: 1.9, ebitda: 0.54 } ] },
+  { id: 'MRD-2507', industry: 'SaaS / Tech', region: 'Mendoza', revenue: 'USD 1.1M', ebitda: 'USD 340K', margin: '31%', growth: '+55%', multiple: '9.4×', asking: 'USD 3.2M', match: 90, status: 'active', geo: 'Mendoza', desc: 'SaaS vertical para gestión de bodegas y exportación. Clientes en Argentina, Chile y Uruguay.', highlights: ['Líder indiscutido en nicho de bodegas', 'Expansión traccionando orgánicamente en Chile', 'API integrada con entes aduaneros'], financials: [ { year: '2022', rev: 0.45, ebitda: 0.08 }, { year: '2023', rev: 0.71, ebitda: 0.18 }, { year: '2024', rev: 1.1, ebitda: 0.34 } ] },
+  { id: 'MRD-2508', industry: 'Agro', region: 'Entre Ríos', revenue: 'USD 3.8M', ebitda: 'USD 920K', margin: '24%', growth: '+7%', multiple: '4.1×', asking: 'USD 3.8M', match: 70, status: 'nda', geo: 'Entre Ríos', desc: 'Empresa citrícola con producción integrada. Exportación a Europa. 180 hectáreas propias.', highlights: ['Certificación GlobalGAP para acceso a mercado europeo', 'Sistema de riego automatizado instalado', 'Empaque propio con capacidad ociosa del 30%'], financials: [ { year: '2022', rev: 3.3, ebitda: 0.75 }, { year: '2023', rev: 3.55, ebitda: 0.85 }, { year: '2024', rev: 3.8, ebitda: 0.92 } ] },
+];

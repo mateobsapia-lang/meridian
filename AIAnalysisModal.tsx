@@ -1,61 +1,133 @@
-import React, { useState } from 'react';
-import { Modal } from '../components/Modal';
-import { useAppContext } from '../AppContext';
-import { auth } from '../firebase';
-import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import {
+  collection, doc, getDoc, getDocs, setDoc, updateDoc, addDoc,
+  query, where, orderBy, limit, onSnapshot, serverTimestamp, increment
+} from 'firebase/firestore';
+import { db, auth } from '../firebase';
+import type { Deal, DealStatus, NDARecord, AuditLog, Notification, DealDocument } from '../types';
 
-export function LoginModal() {
-  const { isLoginModalOpen, setLoginModalOpen, login, showToast } = useAppContext();
-  const [isCargando, setIsCargando] = useState(false);
+// ─── DEALS ───────────────────────────────────────────────────
 
-  const handleGoogleLogin = async () => {
-    setIsCargando(true);
-    try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      login({
-        uid: result.user.uid,
-        name: result.user.displayName || 'Usuario',
-        initials: (result.user.displayName || 'U').charAt(0).toUpperCase(),
-        email: result.user.email || '',
-        role: 'seller'
-      });
-      setLoginModalOpen(false);
-    } catch (error: any) {
-      console.error(error);
-      showToast('Error al iniciar sesión con Google.');
-    } finally {
-      setIsCargando(false);
-    }
-  };
+export async function getPublishedDeals(): Promise<Deal[]> {
+  const q = query(collection(db, 'deals'), where('status', '==', 'published'), orderBy('createdAt', 'desc'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as Deal));
+}
 
-  return (
-    <Modal 
-      isOpen={isLoginModalOpen} 
-      onClose={() => setLoginModalOpen(false)} 
-      title="Ingresar a Meridian"
-    >
-      <div className="flex flex-col gap-6">
-        <p className="text-[13px] text-ink-soft leading-relaxed text-center">
-          Para proteger la confidencialidad de nuestro mercado, solo permitimos accesos verificados institucionales.
-        </p>
+export async function getDeal(id: string): Promise<Deal | null> {
+  const snap = await getDoc(doc(db, 'deals', id));
+  if (!snap.exists()) return null;
+  return { id: snap.id, ...snap.data() } as Deal;
+}
 
-        <button 
-          type="button" 
-          onClick={handleGoogleLogin} 
-          disabled={isCargando}
-          className="btn-primary flex items-center justify-center gap-3 w-full"
-        >
-          <svg className="w-4 h-4 bg-white rounded-full p-[2px]" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-          </svg>
-          {isCargando ? 'Conectando...' : 'Continuar con Google'}
-        </button>
+export async function getUserDeals(userId: string): Promise<Deal[]> {
+  const q = query(collection(db, 'deals'), where('ownerId', '==', userId), orderBy('createdAt', 'desc'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as Deal));
+}
 
-      </div>
-    </Modal>
-  );
+export async function getAllDeals(): Promise<Deal[]> {
+  const q = query(collection(db, 'deals'), orderBy('createdAt', 'desc'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as Deal));
+}
+
+export async function createDeal(data: Omit<Deal, 'id' | 'createdAt' | 'updatedAt' | 'viewCount' | 'ndaRequests' | 'ndaSigned' | 'dataRoomAccess' | 'ioiCount'>): Promise<string> {
+  const id = 'MRD-' + Date.now().toString(36).toUpperCase();
+  await setDoc(doc(db, 'deals', id), {
+    ...data,
+    status: 'under_review',
+    viewCount: 0, ndaRequests: 0, ndaSigned: 0, dataRoomAccess: 0, ioiCount: 0,
+    createdAt: serverTimestamp(),
+  });
+  return id;
+}
+export async function updateDeal(dealId: string, data: Partial<Deal>): Promise<void> {
+  await updateDoc(doc(db, 'deals', dealId), { ...data, updatedAt: serverTimestamp() });
+}
+export async function updateDealStatus(dealId: string, status: DealStatus): Promise<void> {
+  await updateDoc(doc(db, 'deals', dealId), {
+    status, updatedAt: serverTimestamp(),
+    ...(status === 'published' ? { publishedAt: serverTimestamp() } : {})
+  });
+}
+
+export async function incrementDealMetric(dealId: string, field: 'viewCount' | 'ndaRequests' | 'ndaSigned' | 'dataRoomAccess' | 'ioiCount'): Promise<void> {
+  await updateDoc(doc(db, 'deals', dealId), { [field]: increment(1), updatedAt: serverTimestamp() });
+}
+
+// ─── NDA ─────────────────────────────────────────────────────
+
+export async function createNDARequest(dealId: string, buyerId: string, buyerName: string, buyerEmail: string): Promise<string> {
+  const ref = await addDoc(collection(db, 'ndas'), {
+    dealId, buyerId, buyerName, buyerEmail, status: 'pending', createdAt: serverTimestamp()
+  });
+  await incrementDealMetric(dealId, 'ndaRequests');
+  return ref.id;
+}
+
+export async function signNDA(ndaId: string, dealId: string): Promise<void> {
+  await updateDoc(doc(db, 'ndas', ndaId), { status: 'signed', signedAt: serverTimestamp() });
+  await incrementDealMetric(dealId, 'ndaSigned');
+}
+
+export async function getUserNDAs(userId: string): Promise<NDARecord[]> {
+  const q = query(collection(db, 'ndas'), where('buyerId', '==', userId));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as NDARecord));
+}
+
+export async function getDealNDAs(dealId: string): Promise<NDARecord[]> {
+  const q = query(collection(db, 'ndas'), where('dealId', '==', dealId));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as NDARecord));
+}
+
+export async function hasSignedNDA(dealId: string, userId: string): Promise<boolean> {
+  const q = query(collection(db, 'ndas'), where('dealId', '==', dealId), where('buyerId', '==', userId), where('status', '==', 'signed'));
+  const snap = await getDocs(q);
+  return !snap.empty;
+}
+
+// ─── AUDIT LOG ───────────────────────────────────────────────
+
+export async function logAction(dealId: string, action: AuditLog['action'], metadata?: Record<string, any>): Promise<void> {
+  const user = auth.currentUser;
+  if (!user) return;
+  await addDoc(collection(db, 'auditLogs'), {
+    dealId, userId: user.uid, userEmail: user.email, action, metadata: metadata ?? {}, createdAt: serverTimestamp()
+  });
+}
+
+export async function getDealAuditLog(dealId: string): Promise<AuditLog[]> {
+  const q = query(collection(db, 'auditLogs'), where('dealId', '==', dealId), orderBy('createdAt', 'desc'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as AuditLog));
+}
+
+// ─── NOTIFICATIONS ───────────────────────────────────────────
+
+export function subscribeToNotifications(userId: string, callback: (n: Notification[]) => void): () => void {
+  const q = query(collection(db, 'notifications'), where('userId', '==', userId), orderBy('createdAt', 'desc'), limit(20));
+  return onSnapshot(q, snap => { callback(snap.docs.map(d => ({ id: d.id, ...d.data() } as Notification))); });
+}
+
+export async function markNotificationRead(notifId: string): Promise<void> {
+  await updateDoc(doc(db, 'notifications', notifId), { read: true });
+}
+
+export async function createNotification(userId: string, type: Notification['type'], title: string, message: string, dealId?: string): Promise<void> {
+  await addDoc(collection(db, 'notifications'), { userId, type, title, message, dealId, read: false, createdAt: serverTimestamp() });
+}
+
+// ─── DOCUMENTS ───────────────────────────────────────────────
+
+export async function getDealDocuments(dealId: string): Promise<DealDocument[]> {
+  const q = query(collection(db, 'documents'), where('dealId', '==', dealId), orderBy('createdAt', 'desc'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as DealDocument));
+}
+
+export async function saveDealDocument(docData: Omit<DealDocument, 'id' | 'createdAt'>): Promise<string> {
+  const ref = await addDoc(collection(db, 'documents'), { ...docData, createdAt: serverTimestamp() });
+  return ref.id;
 }
