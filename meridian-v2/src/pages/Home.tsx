@@ -46,10 +46,10 @@ export function Home() {
               transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }} className="md:col-span-7">
               <div className="inline-flex items-center gap-2 border border-accent/30 bg-accent-light px-3 py-1.5 mb-7">
                 <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-                <span className="font-mono text-[9px] tracking-[0.14em] uppercase text-accent">5% solo al cierre · Sin costos anticipados</span>
+               <span className="font-mono text-[9px] tracking-[0.14em] uppercase text-accent">Edición de portada · ARG · {new Date().getFullYear()}</span>
               </div>
               <h1 className="font-serif text-[44px] sm:text-[56px] md:text-[68px] font-bold leading-[0.95] tracking-[-0.025em] text-ink mb-7">
-                Vendé tu empresa al precio justo. En 90 días.
+                El mercado discreto donde se <em className="italic text-accent">transmiten</em> las empresas.
               </h1>
               <p className="text-[17px] text-ink-soft leading-[1.65] max-w-[520px] font-light mb-9">
                 Conectamos dueños de PyMEs rentables con compradores institucionales verificados. NDA digital, data room seguro, proceso estructurado.
