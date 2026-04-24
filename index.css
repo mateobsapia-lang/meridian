@@ -1,55 +1,84 @@
-import { Link } from 'react-router-dom';
 import { useAppContext } from '../AppContext';
+import { motion } from 'motion/react';
 
-export function Footer() {
-  const { setContactModalOpen, setSellerWizardOpen, setBuyerWizardOpen } = useAppContext();
+const PROFILES = [
+  { icon: '🏢', title: 'Family Offices', desc: 'Patrimonios familiares que buscan diversificar con activos reales en el mercado local.' },
+  { icon: '📈', title: 'Fondos de PE', desc: 'Fondos de private equity y venture capital con mandato en mid-market latinoamericano.' },
+  { icon: '🤝', title: 'Compradores Estratégicos', desc: 'Empresas que buscan crecimiento inorgánico, integración vertical u horizontal.' },
+  { icon: '👤', title: 'Inversores Individuales', desc: 'HNWIs y empresarios con capital disponible para adquirir operaciones rentables.' },
+];
+
+const STEPS = [
+  { n: '01', title: 'Registrarse como Comprador', desc: 'Completás tu perfil de inversor con criterios de búsqueda, ticket objetivo y sectores de interés.' },
+  { n: '02', title: 'Explorar el Mercado', desc: 'Accedés a teasers ciegos con métricas auditadas. El match score te ayuda a priorizar.' },
+  { n: '03', title: 'Firmar NDA', desc: 'Para ver información confidencial firmás un NDA digital. Verificamos tu identidad.' },
+  { n: '04', title: 'Due Diligence', desc: 'Accedés al data room, te reunís con el management y presentás una IOI.' },
+  { n: '05', title: 'Cierre', desc: 'Nuestros analistas coordinan la negociación, documentación y cierre de la transacción.' },
+];
+
+export function Compradores() {
+  const { setBuyerWizardOpen } = useAppContext();
 
   return (
-    <footer className="bg-ink text-white/60 py-10 md:py-16 pb-8">
-      <div className="container-custom">
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-8 md:gap-12 mb-10">
-          <div className="md:col-span-3">
-            <div className="flex flex-col gap-px mb-3">
-              <span className="font-serif text-[20px] font-bold tracking-[-0.02em] text-white leading-none">Meridian</span>
-              <span className="font-sans text-[8px] tracking-[0.2em] uppercase text-white/30">Mercado privado de empresas</span>
-            </div>
-            <p className="text-[12px] leading-[1.6] max-w-[240px] text-white/45">
-              Plataforma institucional de M&A para PyMEs y mid-market argentino. Confidencialidad absoluta.
+    <div className="animate-in fade-in duration-500">
+      {/* Hero */}
+      <section className="bg-paper-deep pt-16 pb-20 border-b border-border-strong">
+        <div className="container-custom">
+          <div className="max-w-2xl">
+            <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-accent mb-4">Para Compradores</div>
+            <h1 className="font-serif text-[36px] sm:text-[48px] md:text-[60px] font-bold leading-[0.95] tracking-[-0.025em] text-ink mb-6">
+              Acceso institucional al mercado privado
+            </h1>
+            <p className="text-[16px] text-ink-soft leading-[1.65] mb-8 font-light">
+              Meridian te conecta con oportunidades de adquisición verificadas, con métricas auditadas y procesos de confidencialidad de nivel institucional.
             </p>
-          </div>
-          
-          <div className="flex flex-col">
-            <h4 className="text-[9px] font-medium tracking-[0.16em] uppercase text-white/40 mb-[14px]">Plataforma</h4>
-            <Link to="/mercado" className="text-[12px] text-white/55 mb-2 hover:text-white transition-colors">Marketplace</Link>
-            <button onClick={() => setSellerWizardOpen(true)} className="text-[12px] text-white/55 mb-2 hover:text-white transition-colors text-left">Vender empresa</button>
-            <button onClick={() => setBuyerWizardOpen(true)} className="text-[12px] text-white/55 mb-2 hover:text-white transition-colors text-left">Registro comprador</button>
-            <Link to="/proceso" className="text-[12px] text-white/55 mb-2 hover:text-white transition-colors">Cómo funciona</Link>
-          </div>
-          
-          <div className="flex flex-col">
-            <h4 className="text-[9px] font-medium tracking-[0.16em] uppercase text-white/40 mb-[14px]">Legal</h4>
-            <a href="#" className="text-[12px] text-white/55 mb-2 hover:text-white transition-colors">Términos y condiciones</a>
-            <a href="#" className="text-[12px] text-white/55 mb-2 hover:text-white transition-colors">Privacidad</a>
-            <a href="#" className="text-[12px] text-white/55 mb-2 hover:text-white transition-colors">Política AML/KYC</a>
-            <a href="#" className="text-[12px] text-white/55 mb-2 hover:text-white transition-colors">NDA estándar</a>
-          </div>
-          
-          <div className="flex flex-col">
-            <h4 className="text-[9px] font-medium tracking-[0.16em] uppercase text-white/40 mb-[14px]">Contacto</h4>
-            <button onClick={() => setContactModalOpen(true)} className="text-[12px] text-white/55 mb-2 hover:text-white transition-colors text-left uppercase">hola@meridian.ar</button>
-            <span className="text-[12px] text-white/55 mb-2">Buenos Aires, CABA</span>
-            <a href="#" className="text-[12px] text-white/55 mb-2 hover:text-white transition-colors">LinkedIn</a>
+            <button onClick={() => setBuyerWizardOpen(true)} className="btn-primary">
+              Registrarme como Comprador
+            </button>
           </div>
         </div>
-        
-        <div className="border-t border-white/10 pt-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-[10px] text-white/30">© 2025 Meridian S.A.S. · Todos los derechos reservados · CABA, Argentina</p>
-          <div className="flex items-center gap-[6px] font-mono text-[9px] tracking-[0.06em] text-white/30">
-            <span className="w-[6px] h-[6px] rounded-full bg-white/20"></span>
-            Sujeto Obligado UIF · Res. 30/2017 · CUIT activo AFIP
+      </section>
+
+      {/* Perfiles */}
+      <section className="py-16 bg-paper border-b border-border-strong">
+        <div className="container-custom">
+          <h2 className="font-serif text-[28px] md:text-[36px] font-bold text-ink tracking-[-0.02em] mb-10">¿Para quién es Meridian?</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-border-strong border border-border-strong">
+            {PROFILES.map((p, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }} viewport={{ once: true }}
+                className="bg-paper p-8 flex flex-col gap-4">
+                <span className="text-3xl">{p.icon}</span>
+                <h3 className="font-serif text-[18px] font-bold text-ink">{p.title}</h3>
+                <p className="text-[13px] text-ink-soft leading-relaxed">{p.desc}</p>
+              </motion.div>
+            ))}
           </div>
         </div>
-      </div>
-    </footer>
+      </section>
+
+      {/* Proceso */}
+      <section className="py-16 bg-paper-deep">
+        <div className="container-custom">
+          <h2 className="font-serif text-[28px] md:text-[36px] font-bold text-ink tracking-[-0.02em] mb-10">Proceso de adquisición</h2>
+          <div className="flex flex-col gap-0">
+            {STEPS.map((s, i) => (
+              <div key={i} className="flex gap-6 md:gap-10 items-start py-7 border-b border-border-subtle last:border-none">
+                <div className="font-mono text-[28px] md:text-[36px] font-bold text-border-strong shrink-0 w-12 md:w-16">{s.n}</div>
+                <div>
+                  <h3 className="font-serif text-[18px] md:text-[20px] font-bold text-ink mb-2">{s.title}</h3>
+                  <p className="text-[13px] text-ink-soft leading-relaxed">{s.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-12">
+            <button onClick={() => setBuyerWizardOpen(true)} className="btn-primary">
+              Comenzar como Comprador →
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }

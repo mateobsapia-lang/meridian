@@ -1,119 +1,149 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Modal } from '../components/Modal';
 import { useAppContext } from '../AppContext';
-import { motion } from 'motion/react';
+import { useNavigate } from 'react-router-dom';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import { getUserDeals } from '../lib/firestore';
 
-export function LeadCaptureModal() {
-  const { isLeadModalOpen, setLeadModalOpen, showToast } = useAppContext();
-  const [email, setEmail] = useState('');
-  const [company, setCompany] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+export function ProfileModal() {
+  const { isProfileModalOpen, setProfileModalOpen, user, logout, showToast, login } = useAppContext();
+  const navigate = useNavigate();
+  const [switching, setSwitching] = useState(false);
+  const [confirmSwitch, setConfirmSwitch] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
-    try {
-      await fetch('https://formsubmit.co/ajax/mateobsapia@gmail.com', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          _subject: `MERIDIAN: Solicitud de Análisis DCF - ${company}`,
-          _template: 'box',
-          "🏢 Empresa / Proyecto": company,
-          "✉️ Correo Corporativo": email,
-          "🎯 Origen": 'Calculadora de Valuación (Lead Magnet)'
-        })
-      });
-    } catch (error) {
-      console.log('Error de red al enviar lead', error);
+  if (!user) return null;
+
+  const handleSwitchRole = async () => {
+    if (!confirmSwitch) {
+      setConfirmSwitch(true);
+      return;
     }
 
-    setIsSubmitting(false);
-    setIsSuccess(true);
-    showToast('Solicitud enviada a un analista.');
-    
-    // Close after short delay
-    setTimeout(() => {
-      setIsSuccess(false);
-      setLeadModalOpen(false);
-      setEmail('');
-      setCompany('');
-    }, 2000);
+    setSwitching(true);
+    try {
+      // Si es vendedor, verificar que no tenga deals activos
+      if (user.role === 'seller') {
+        const deals = await getUserDeals(user.uid);
+        const activeDeals = deals.filter(d =>
+          ['under_review', 'published', 'nda_phase', 'loi_received', 'closing'].includes(d.status)
+        );
+        if (activeDeals.length > 0) {
+          showToast(`No podés cambiar de rol: tenés ${activeDeals.length} deal(s) activo(s).`);
+          setSwitching(false);
+          setConfirmSwitch(false);
+          return;
+        }
+      }
+
+      const newRole = user.role === 'buyer' ? 'seller' : 'buyer';
+      await updateDoc(doc(db, 'users', user.uid), { role: newRole });
+
+      // Actualizar contexto
+      login({ ...user, role: newRole });
+      showToast(`Rol cambiado a ${newRole === 'buyer' ? 'Comprador' : 'Vendedor'}`);
+      setConfirmSwitch(false);
+      setProfileModalOpen(false);
+      navigate('/dashboard');
+    } catch {
+      showToast('Error al cambiar rol. Intentá de nuevo.');
+    } finally {
+      setSwitching(false);
+    }
   };
 
-  // Prevent returning null right away to allow AnimatePresence to run
-  // The actual modal vis is controlled by Modal's AnimatePresence.
-  // But we have a bug if we use `if(!isLeadModalOpen) return null`, so we remove it.
+  const targetRole = user.role === 'buyer' ? 'Vendedor' : 'Comprador';
+  const isAdmin = user.role === 'admin';
 
   return (
-    <Modal 
-      isOpen={isLeadModalOpen} 
-      onClose={() => setLeadModalOpen(false)} 
-      title="Análisis Financiero Privado"
+    <Modal
+      isOpen={isProfileModalOpen}
+      onClose={() => { setProfileModalOpen(false); setConfirmSwitch(false); }}
+      title="Perfil de Usuario"
     >
-      {!isSuccess ? (
-        <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6">
+        {/* Avatar + info */}
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-accent text-white flex items-center justify-center font-medium font-serif text-[24px]">
+            {user.initials}
+          </div>
           <div>
-            <p className="text-[13px] text-ink-soft leading-relaxed">
-              Complete los datos para que uno de nuestros <strong className="text-ink">Analistas de M&A</strong> asigne un modelo Descontado de Flujo de Efectivo (DCF) y múltiplos transaccionales ajustados a su empresa.
-            </p>
+            <div className="text-[14px] font-medium text-ink">{user.name}</div>
+            <div className="text-[12px] font-mono text-ink-mute">{user.email}</div>
+          </div>
+        </div>
+
+        {/* Rol actual */}
+        <div className="flex flex-col gap-2 border-t border-border-strong pt-5">
+          <div className="text-[10px] font-medium tracking-[0.1em] uppercase text-ink-mute mb-1">
+            Tipo de cuenta
+          </div>
+          <div className={`flex items-center gap-3 px-4 py-3 border text-[13px] font-medium ${
+            isAdmin ? 'border-accent/30 bg-accent-light text-accent' :
+            user.role === 'buyer' ? 'border-blue-200 bg-blue-50 text-blue-700' :
+            'border-border-subtle bg-paper-deep text-ink-soft'
+          }`}>
+            <span className="text-lg">
+              {isAdmin ? '⚡' : user.role === 'buyer' ? '🔍' : '🏢'}
+            </span>
+            {isAdmin ? 'Administrador' : user.role === 'buyer' ? 'Comprador Institucional / Inversor' : 'Vendedor / Propietario'}
           </div>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            <div>
-              <label className="block text-[10px] font-mono uppercase tracking-[0.1em] text-ink-mute mb-2">Correo Corporativo</label>
-              <input 
-                type="email" 
-                required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="w-full bg-paper-deep border border-border-strong text-ink text-[14px] p-3 outline-none focus:border-accent transition-colors"
-                placeholder="ej: ceo@empresa.com"
-              />
+          {/* Switch rol — solo buyer/seller, no admin */}
+          {!isAdmin && (
+            <div className="mt-2">
+              {!confirmSwitch ? (
+                <button
+                  onClick={() => setConfirmSwitch(true)}
+                  className="w-full text-[11px] font-mono tracking-wider text-ink-mute border border-border-strong px-4 py-2.5 hover:bg-paper-mid transition-colors text-left flex items-center justify-between"
+                >
+                  <span>Cambiar a {targetRole}</span>
+                  <span>→</span>
+                </button>
+              ) : (
+                <div className="border border-amber-300 bg-amber-50 p-4 flex flex-col gap-3">
+                  <p className="text-[12px] text-amber-800">
+                    {user.role === 'seller'
+                      ? `¿Confirmar cambio a Comprador? Si tenés deals activos no podrás cambiar.`
+                      : `¿Confirmar cambio a Vendedor? Perderás la vista de comprador.`
+                    }
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSwitchRole}
+                      disabled={switching}
+                      className="flex-1 text-[11px] font-medium px-3 py-2 bg-amber-600 text-white hover:bg-amber-700 transition-colors"
+                    >
+                      {switching ? 'Cambiando...' : 'Confirmar'}
+                    </button>
+                    <button
+                      onClick={() => setConfirmSwitch(false)}
+                      className="flex-1 text-[11px] font-medium px-3 py-2 border border-border-strong text-ink-soft hover:bg-paper-mid transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-            <div>
-              <label className="block text-[10px] font-mono uppercase tracking-[0.1em] text-ink-mute mb-2">Razón Social / Proyecto</label>
-              <input 
-                type="text" 
-                required
-                value={company}
-                onChange={e => setCompany(e.target.value)}
-                className="w-full bg-paper-deep border border-border-strong text-ink text-[14px] p-3 outline-none focus:border-accent transition-colors"
-                placeholder="ej: Tech Solutions S.A."
-              />
-            </div>
+          )}
+        </div>
 
-            <motion.button 
-              whileTap={{ scale: 0.97 }}
-              whileHover={{ scale: 1.01 }}
-              transition={{ duration: 0.2 }}
-              type="submit" 
-              disabled={isSubmitting}
-              className="mt-2 btn-accent w-full disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? 'Encriptando Solicitud...' : 'Solicitar Reporte de Valuación Privado'}
-            </motion.button>
-            <div className="text-[10px] text-center text-ink-mute font-mono">
-              Proceso 100% confidencial auditado por M&A Partners.
-            </div>
-          </form>
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center p-8 text-center text-ink">
-          <div className="w-16 h-16 rounded-full bg-accent/10 text-accent flex items-center justify-center font-serif text-[32px] font-medium mb-6 animate-pulse">
-            ✓
-          </div>
-          <h3 className="font-serif text-[24px] font-bold mb-2">Solicitud Recibida</h3>
-          <p className="text-[13px] text-ink-soft">
-            Un analista senior de Meridian le enviará el reporte a <strong>{email}</strong> en las próximas 24-48 horas.
-          </p>
-        </div>
-      )}
+        {/* Acciones */}
+        <button
+          onClick={() => { setProfileModalOpen(false); navigate('/dashboard'); }}
+          className="btn-primary w-full"
+        >
+          Mi Panel (Workspace)
+        </button>
+
+        <button
+          onClick={logout}
+          className="btn-ghost !border-[#fca5a5] !text-[#ef4444] hover:!bg-[#fef2f2] hover:!border-[#ef4444] self-start"
+        >
+          Cerrar sesión
+        </button>
+      </div>
     </Modal>
   );
 }

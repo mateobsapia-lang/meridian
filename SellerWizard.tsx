@@ -1,120 +1,160 @@
 import { useState, useEffect } from 'react';
-import { Modal } from '../components/Modal';
 import { useAppContext } from '../AppContext';
-import { createNDARequest, hasSignedNDA, getDeal, createNotification } from '../lib/firestore';
-import type { Deal } from '../types';
 
-export function NDAModal() {
-  const { isNdaModalOpen, setNdaModalOpen, selectedDealId, user, showToast } = useAppContext();
-  const [deal, setDeal] = useState<Deal | null>(null);
-  const [alreadySigned, setAlreadySigned] = useState(false);
-  const [step, setStep] = useState<'form' | 'success'>('form');
+const TC_VERSION = 'v1.0-2025';
+
+export function WelcomeModal() {
+  const { user, setLoginModalOpen } = useAppContext();
+  const [show, setShow] = useState(false);
+  const [step, setStep] = useState<'welcome' | 'tc'>('welcome');
+  const [role, setRole] = useState<'buyer' | 'seller' | 'viewer' | null>(null);
   const [accepted, setAccepted] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [scrolledToBottom, setScrolledToBottom] = useState(false);
 
   useEffect(() => {
-    if (!selectedDealId || !isNdaModalOpen) return;
-    getDeal(selectedDealId).then(setDeal);
-    if (user) hasSignedNDA(selectedDealId, user.uid).then(setAlreadySigned);
-  }, [selectedDealId, isNdaModalOpen, user]);
+    const accepted = localStorage.getItem('meridian_tc_accepted');
+    if (!accepted) {
+      setTimeout(() => setShow(true), 800);
+    }
+  }, []);
 
-  const handleSubmit = async () => {
-    if (!user || !selectedDealId || !deal) return;
-    setSubmitting(true);
-    try {
-      await createNDARequest(selectedDealId, user.uid, user.name, user.email);
-      // Notify seller
-      await createNotification(
-        deal.ownerId,
-        'nda_request',
-        'Nueva Solicitud de NDA',
-        `${user.name} solicitó acceso NDA para ${deal.nombreFantasia}`,
-        selectedDealId
-      );
-      setStep('success');
-    } catch {
-      showToast('Error al enviar solicitud. Intentá de nuevo.');
-    } finally {
-      setSubmitting(false);
+  const handleAccept = () => {
+    localStorage.setItem('meridian_tc_accepted', TC_VERSION);
+    localStorage.setItem('meridian_tc_date', new Date().toISOString());
+    if (role) localStorage.setItem('meridian_preferred_role', role);
+    setShow(false);
+  };
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    if (el.scrollHeight - el.scrollTop <= el.clientHeight + 50) {
+      setScrolledToBottom(true);
     }
   };
 
-  const onClose = () => { setNdaModalOpen(false); setStep('form'); setAccepted(false); };
+  if (!show) return null;
 
   return (
-    <Modal isOpen={isNdaModalOpen} onClose={onClose} title="Acuerdo de Confidencialidad (NDA)">
-      {alreadySigned ? (
-        <div className="flex flex-col items-center py-8 gap-4 text-center">
-          <div className="w-14 h-14 rounded-full bg-accent-light border border-accent/30 flex items-center justify-center text-2xl">✓</div>
-          <h3 className="font-serif text-[22px] font-bold text-ink">NDA ya firmado</h3>
-          <p className="text-ink-mute text-[14px]">Ya tenés acceso a la información confidencial de este deal.</p>
-          <button onClick={onClose} className="btn-primary">Ver Deal</button>
-        </div>
-      ) : step === 'success' ? (
-        <div className="flex flex-col items-center py-8 gap-4 text-center">
-          <div className="w-14 h-14 rounded-full bg-accent-light border border-accent/30 flex items-center justify-center text-2xl">✓</div>
-          <h3 className="font-serif text-[22px] font-bold text-ink">Solicitud Enviada</h3>
-          <p className="text-ink-mute text-[14px] max-w-sm">Tu solicitud de NDA fue enviada. El equipo de Meridian verificará tu perfil y te notificará en 24–48hs.</p>
-          <button onClick={onClose} className="btn-primary mt-2">Entendido</button>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-5">
-          <div>
-            <div className="font-mono text-[9px] uppercase tracking-widest text-accent mb-1">Acuerdo de No Divulgación</div>
-            <h3 className="font-serif text-[20px] font-bold text-ink">
-              {deal ? `${deal.id} · ${deal.industria}` : 'Cargando...'}
-            </h3>
-          </div>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-ink/80 backdrop-blur-sm">
+      <div className="bg-paper border border-border-strong shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col animate-in fade-in duration-300">
 
-          <div className="border border-border-strong bg-paper-deep p-6 h-64 overflow-y-auto text-[12px] text-ink-soft leading-relaxed font-serif relative">
-            {/* Watermark */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03]">
-              <span className="text-8xl font-black rotate-[-30deg]">CONFIDENCIAL</span>
+        {step === 'welcome' && (
+          <>
+            <div className="p-8 border-b border-border-strong">
+              <div className="font-mono text-[9px] tracking-[0.16em] uppercase text-accent mb-3">Bienvenido a Meridian</div>
+              <h2 className="font-serif text-[28px] font-bold text-ink leading-tight">El mercado privado donde se transmiten empresas.</h2>
             </div>
-            
-            <div className="relative z-10 space-y-4">
-              <h4 className="text-center font-bold text-ink text-[14px] mb-6">ACUERDO DE NO DIVULGACIÓN (NDA)</h4>
-              
-              <p>
-                Entre <strong>MERIDIAN M&A LLC</strong> (en adelante, la "Parte Reveladora") y <strong>{user?.name?.toUpperCase() || 'EL RECEPTOR'}</strong>, titular de la cuenta de correo electrónico <strong>{user?.email}</strong> (en adelante, el "Receptor"), se celebra el presente Acuerdo de Confidencialidad a los {new Date().getDate()} días del mes de {new Date().toLocaleString('es-ES', { month: 'long' })} de {new Date().getFullYear()}.
+            <div className="p-8 flex flex-col gap-6 flex-1 overflow-y-auto">
+              <p className="text-[13px] text-ink-soft leading-relaxed">
+                Meridian es una plataforma institucional de M&A para PyMEs argentinas. Antes de continuar, necesitamos saber cómo vas a usar la plataforma.
               </p>
-              
-              <p>
-                <strong>1. OBJETO.</strong> La Parte Reveladora compartirá con el Receptor información confidencial relacionada a la oportunidad de inversión identificada como <strong>Proyecto {deal?.id}</strong> en la industria de <strong>{deal?.industria}</strong> (en adelante "La Empresa"), con el único propósito de evaluar una posible transacción (el "Propósito").
-              </p>
-              
-              <p>
-                <strong>2. INFORMACIÓN CONFIDENCIAL.</strong> Se considera Información Confidencial a todos los datos financieros, operativos, comerciales, fiscales, laborales, tecnológicos y estratégicos de La Empresa, incluyendo su identidad, métricas de retención, EBITDA reportado de <strong>USD {(deal?.ebitda || 0) / 1000}K</strong> y Revenue de <strong>USD {(deal?.revenue || 0) / 1000}K</strong>, así como la existencia misma de las negociaciones informadas a través de la plataforma Meridian.
-              </p>
-              
-              <p>
-                <strong>3. OBLIGACIONES DEL RECEPTOR.</strong> El Receptor se obliga expresa e irrevocablemente a (a) mantener la Información Confidencial en la más estricta reserva; (b) no revelarla, transferirla, divulgarla ni publicarla por ningún medio; (c) no utilizar la información para competir directa o indirectamente contra La Empresa, ni para contactar a sus clientes, empleados o proveedores; y (d) no intentar circunvalar a Meridian M&A LLC en la presente transacción.
-              </p>
-              
-              <p>
-                <strong>4. PENALIDADES.</strong> En caso de incumplimiento comprobado, la Parte Reveladora se reserva el derecho de reclamar daños y perjuicios de acuerdo a la legislación vigente aplicable en la Ciudad Autónoma de Buenos Aires, República Argentina, además de la suspensión permanente de la cuenta del Receptor en la plataforma Meridian.
-              </p>
-              
-              <p className="mt-8 pt-4 border-t border-border-subtle flex flex-col items-end">
-                <span className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-2">Firma Digital Registrada</span>
-                <span className="font-serif italic text-ink text-[16px]">{user?.name}</span>
-                <span className="font-mono text-[8px] text-ink-mute">ID: {user?.uid?.substring(0, 8)} · TIMESTAMP: {new Date().getTime()}</span>
+              <div className="flex flex-col gap-3">
+                <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-1">¿Cómo querés usar Meridian?</div>
+                <button
+                  onClick={() => setRole('seller')}
+                  className={`flex items-start gap-4 p-4 border transition-all text-left ${role === 'seller' ? 'border-accent bg-accent-light' : 'border-border-strong hover:bg-paper-mid'}`}
+                >
+                  <span className="text-2xl mt-0.5">🏢</span>
+                  <div>
+                    <div className="font-medium text-ink text-[14px]">Quiero vender mi empresa</div>
+                    <div className="text-[12px] text-ink-mute mt-0.5">Listá tu empresa y accedé a compradores institucionales verificados</div>
+                  </div>
+                  {role === 'seller' && <span className="ml-auto text-accent">✓</span>}
+                </button>
+                <button
+                  onClick={() => setRole('buyer')}
+                  className={`flex items-start gap-4 p-4 border transition-all text-left ${role === 'buyer' ? 'border-accent bg-accent-light' : 'border-border-strong hover:bg-paper-mid'}`}
+                >
+                  <span className="text-2xl mt-0.5">🔍</span>
+                  <div>
+                    <div className="font-medium text-ink text-[14px]">Busco empresas para adquirir</div>
+                    <div className="text-[12px] text-ink-mute mt-0.5">Explorá oportunidades verificadas con métricas auditadas</div>
+                  </div>
+                  {role === 'buyer' && <span className="ml-auto text-accent">✓</span>}
+                </button>
+                <button
+                  onClick={() => setRole('viewer')}
+                  className={`flex items-start gap-4 p-4 border transition-all text-left ${role === 'viewer' ? 'border-accent bg-accent-light' : 'border-border-strong hover:bg-paper-mid'}`}
+                >
+                  <span className="text-2xl mt-0.5">👀</span>
+                  <div>
+                    <div className="font-medium text-ink text-[14px]">Solo estoy explorando</div>
+                    <div className="text-[12px] text-ink-mute mt-0.5">Conocé cómo funciona el mercado privado argentino</div>
+                  </div>
+                  {role === 'viewer' && <span className="ml-auto text-accent">✓</span>}
+                </button>
+              </div>
+            </div>
+            <div className="p-6 border-t border-border-strong">
+              <button
+                onClick={() => setStep('tc')}
+                disabled={!role}
+                className="btn-primary w-full disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Continuar →
+              </button>
+            </div>
+          </>
+        )}
+
+        {step === 'tc' && (
+          <>
+            <div className="p-6 border-b border-border-strong flex items-center gap-3">
+              <button onClick={() => setStep('welcome')} className="text-ink-mute hover:text-ink text-[12px] font-mono">← Atrás</button>
+              <div className="font-mono text-[10px] uppercase tracking-widest text-ink-mute">Términos y Condiciones</div>
+            </div>
+            <div onScroll={handleScroll} className="flex-1 overflow-y-auto p-6 text-[12px] text-ink-soft leading-relaxed font-serif space-y-4 max-h-80">
+              <p><strong className="font-sans text-ink">1. Objeto de la plataforma</strong><br />
+              Meridian (en adelante "la Plataforma") opera como intermediario en procesos de compraventa de empresas ("M&A") en la República Argentina. La Plataforma no es parte de ninguna transacción y no garantiza la concreción de ninguna operación.</p>
+
+              <p><strong className="font-sans text-ink">2. Confidencialidad</strong><br />
+              Toda información publicada en la Plataforma está protegida por acuerdos de confidencialidad (NDA). El usuario se compromete a no divulgar, reproducir ni utilizar dicha información para fines distintos a la evaluación de una potencial transacción.</p>
+
+              <p><strong className="font-sans text-ink">3. Veracidad de la información</strong><br />
+              El vendedor declara bajo juramento que la información proporcionada es verídica y completa. La Plataforma no se responsabiliza por la inexactitud de los datos proporcionados por los usuarios.</p>
+
+              <p><strong className="font-sans text-ink">4. Comisión al éxito</strong><br />
+              Meridian percibe una comisión sobre el precio de cierre de la transacción, conforme al acuerdo firmado con el vendedor. No se cobran honorarios anticipados por la publicación.</p>
+
+              <p><strong className="font-sans text-ink">5. Cumplimiento UIF</strong><br />
+              Meridian opera como Sujeto Obligado ante la Unidad de Información Financiera (UIF) conforme a la Resolución 30/2017. Los usuarios aceptan someterse a los procedimientos de identificación (KYC/AML) requeridos.</p>
+
+              <p><strong className="font-sans text-ink">6. Privacidad de datos</strong><br />
+              Los datos personales son tratados conforme a la Ley 25.326 de Protección de Datos Personales. El usuario presta consentimiento expreso para el tratamiento de sus datos con fines operativos de la Plataforma.</p>
+
+              <p><strong className="font-sans text-ink">7. Jurisdicción</strong><br />
+              Las partes se someten a la jurisdicción de los Tribunales Ordinarios de la Ciudad Autónoma de Buenos Aires para cualquier controversia derivada del uso de la Plataforma.</p>
+
+              <p><strong className="font-sans text-ink">8. Modificaciones</strong><br />
+              Meridian se reserva el derecho de modificar estos términos con notificación previa a los usuarios registrados. El uso continuado de la Plataforma implica aceptación de los términos vigentes.</p>
+
+              {!scrolledToBottom && (
+                <div className="text-center text-[10px] text-ink-mute font-mono animate-bounce py-2">↓ Scrolleá para leer todo</div>
+              )}
+            </div>
+            <div className="p-6 border-t border-border-strong flex flex-col gap-4">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" checked={accepted} onChange={e => setAccepted(e.target.checked)}
+                  disabled={!scrolledToBottom}
+                  className="mt-0.5 accent-accent" />
+                <span className={`text-[12px] leading-relaxed ${!scrolledToBottom ? 'text-ink-mute' : 'text-ink-soft'}`}>
+                  Leí y acepto los Términos y Condiciones, la Política de Privacidad y el compromiso de confidencialidad de Meridian.
+                </span>
+              </label>
+              <button
+                onClick={handleAccept}
+                disabled={!accepted}
+                className="btn-primary w-full disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Ingresar a Meridian
+              </button>
+              <p className="text-[10px] text-ink-mute text-center font-mono">
+                Versión {TC_VERSION} · Jurisdicción CABA, Argentina
               </p>
             </div>
-          </div>
-
-          <label className="flex items-start gap-3 cursor-pointer bg-paper-deep border border-border-subtle p-4 mt-2">
-            <input type="checkbox" checked={accepted} onChange={e => setAccepted(e.target.checked)} className="mt-0.5 accent-accent" />
-            <span className="text-[12px] text-ink-soft">
-              Declaro bajo juramento mi identidad y acepto las consecuencias legales vinculantes de este <strong>Acuerdo de Confidencialidad</strong>.
-            </span>
-          </label>
-
-          <button onClick={handleSubmit} disabled={!accepted || submitting} className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed">
-            {submitting ? 'Registrando firma digital...' : 'Firmar Digitalmente y Solicitar Acceso'}
-          </button>
-        </div>
-      )}
-    </Modal>
+          </>
+        )}
+      </div>
+    </div>
   );
 }

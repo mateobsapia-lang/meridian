@@ -1,67 +1,94 @@
-import { Link, useLocation } from 'react-router-dom';
-import { useAppContext } from '../AppContext';
-import { NotificationBell } from './NotificationBell';
+@import "tailwindcss";
 
-export function Header() {
-  const { user, setLoginModalOpen, setSellerWizardOpen, setProfileModalOpen } = useAppContext();
-  const location = useLocation();
+@theme {
+  --color-ink: #0D0D0B;
+  --color-ink-soft: #4A4A46;
+  --color-ink-mute: #9A9A94;
+  --color-paper: #FAFAF7;
+  --color-paper-deep: #F2F1EC;
+  --color-paper-mid: #E8E7E0;
+  --color-accent: #0F6E56;
+  --color-accent-light: #E1F5EE;
+  --color-gold: #B8952A;
+  --color-border-subtle: rgba(13, 13, 11, 0.10);
+  --color-border-strong: rgba(13, 13, 11, 0.18);
+  
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  --font-mono: "DM Mono", monospace;
+}
 
-  return (
-    <header className="bg-paper border-b border-border-strong sticky top-0 z-50">
-      <div className="container-custom relative z-50 bg-paper">
-        <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex flex-col gap-px">
-            <span className="font-serif text-[20px] font-bold tracking-[-0.02em] text-ink leading-none">Meridian</span>
-            <span className="font-sans text-[8px] tracking-[0.2em] uppercase text-ink-mute">Mercado privado de empresas</span>
-          </Link>
+@layer base {
+  body {
+    @apply font-sans bg-paper text-ink antialiased overflow-x-hidden max-w-[100vw];
+  }
+}
 
-          <nav className="hidden md:flex items-center gap-7">
-            <Link to="/mercado" className="text-[11px] font-medium tracking-[0.08em] uppercase text-ink-soft hover:text-ink transition-colors">Mercado</Link>
-            <Link to="/proceso" className="text-[11px] font-medium tracking-[0.08em] uppercase text-ink-soft hover:text-ink transition-colors">Proceso</Link>
-            <Link to="/compradores" className="text-[11px] font-medium tracking-[0.08em] uppercase text-ink-soft hover:text-ink transition-colors">Compradores</Link>
-            <Link to="/nosotros" className="text-[11px] font-medium tracking-[0.08em] uppercase text-ink-soft hover:text-ink transition-colors">Nosotros</Link>
-            {user?.role === 'admin' && (
-              <Link to="/dashboard" className="text-[11px] font-medium tracking-[0.08em] uppercase text-accent hover:text-ink transition-colors">Admin</Link>
-            )}
-          </nav>
+@layer components {
+  .btn-primary {
+    @apply inline-block bg-ink text-paper text-[10px] font-medium tracking-[0.15em] uppercase py-[14px] px-[28px] transition-colors duration-200 hover:bg-accent cursor-pointer text-center;
+  }
+  .btn-ghost {
+    @apply inline-block border border-border-strong text-ink text-[10px] font-medium tracking-[0.15em] uppercase py-[13px] px-[28px] transition-all duration-200 hover:bg-paper-deep hover:border-ink cursor-pointer text-center;
+  }
+  .btn-accent {
+    @apply inline-block bg-accent text-white text-[10px] font-medium tracking-[0.15em] uppercase py-[14px] px-[28px] transition-colors duration-200 hover:bg-[#0a5240] cursor-pointer text-center disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+  .eyebrow {
+    @apply font-sans text-[10px] font-medium tracking-[0.14em] uppercase text-ink-mute;
+  }
+  .eyebrow-accent {
+    @apply text-accent;
+  }
+  .container-custom {
+    @apply max-w-[1200px] mx-auto px-5 sm:px-8 md:px-[48px];
+  }
+}
 
-          <div className="flex gap-2 sm:gap-3 items-center">
-            <div className="hidden sm:flex items-center gap-[5px] font-mono text-[9px] tracking-[0.1em] text-ink-mute border border-border-subtle py-[3px] px-2">
-              <span className="w-[5px] h-[5px] rounded-full bg-[#4ade80] animate-pulse-dot"></span>
-              MERCADO ACTIVO
-            </div>
+/* Custom Utilities */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+}
 
-            {user ? (
-              <div className="flex items-center gap-2 ml-1">
-                <NotificationBell />
-                <button onClick={() => setProfileModalOpen(true)}
-                  className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center font-medium text-[10px] tracking-wider">
-                  {user.initials}
-                </button>
-              </div>
-            ) : (
-              <div className="flex gap-2 items-center">
-                <button onClick={() => setLoginModalOpen(true)} className="hidden min-[380px]:inline-flex btn-ghost !py-[9px] !px-3 sm:!px-4 !text-[9px]">Ingresar</button>
-                <button onClick={() => setSellerWizardOpen(true)} className="btn-primary !py-[9px] !px-3 sm:!px-4 !text-[9px] whitespace-nowrap">Listar</button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+/* Global Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-ink-mute);
+}
 
-      <div className="md:hidden border-t border-border-subtle bg-paper overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        <nav className="flex items-center min-w-max px-2">
-          {[['Mercado','/mercado'],['Proceso','/proceso'],['Compradores','/compradores'],['Nosotros','/nosotros']].map(([label, path]) => (
-            <Link key={path} to={path}
-              className={`text-[10px] font-medium tracking-[0.1em] uppercase px-3 py-3 border-b-2 transition-colors ${location.pathname === path ? 'text-ink border-ink' : 'text-ink-soft border-transparent hover:text-ink'}`}>
-              {label}
-            </Link>
-          ))}
-          {user?.role === 'admin' && (
-            <Link to="/dashboard" className="text-[10px] font-medium tracking-[0.1em] uppercase px-3 py-3 border-b-2 text-accent border-transparent">Admin</Link>
-          )}
-        </nav>
-      </div>
-    </header>
-  );
+/* Ticker Animation */
+@keyframes tick {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-tick {
+  animation: tick 40s linear infinite;
+}
+.animate-tick:hover {
+  animation-play-state: paused;
+}
+
+/* Badge Pulse */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.animate-pulse-dot {
+  animation: pulse-dot 2s infinite;
 }

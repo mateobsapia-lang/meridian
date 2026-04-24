@@ -1,67 +1,94 @@
-import { Link, useLocation } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { useAppContext } from '../AppContext';
-import { NotificationBell } from './NotificationBell';
 
-export function Header() {
-  const { user, setLoginModalOpen, setSellerWizardOpen, setProfileModalOpen } = useAppContext();
-  const location = useLocation();
+const PHASES = [
+  {
+    phase: 'Fase 1', title: 'Listado y Preparación', duration: '2–4 semanas',
+    seller: ['Completás el wizard de información', 'Subís estados contables y documentación', 'Nuestro equipo audita los datos'],
+    buyer: ['Explorás el mercado con teasers ciegos', 'El match score prioriza tus oportunidades'],
+    color: 'border-accent',
+  },
+  {
+    phase: 'Fase 2', title: 'NDA y Acceso Confidencial', duration: '1–2 semanas',
+    seller: ['Recibís solicitudes de NDA de compradores verificados', 'Aprobás o rechazás cada acceso', 'El data room se activa para compradores aprobados'],
+    buyer: ['Firmás el NDA digital', 'Accedés a información completa: nombre, contactos, docs', 'Analizás el data room'],
+    color: 'border-amber-400',
+  },
+  {
+    phase: 'Fase 3', title: 'Due Diligence', duration: '4–8 semanas',
+    seller: ['Te reunís con compradores serios', 'Respondés preguntas de management', 'Recibís Indicaciones de Interés (IOI)'],
+    buyer: ['Realizás due diligence financiero, legal y operativo', 'Presentás una IOI con precio y estructura'],
+    color: 'border-blue-400',
+  },
+  {
+    phase: 'Fase 4', title: 'Negociación y Cierre', duration: '4–12 semanas',
+    seller: ['Evaluás las ofertas con nuestros analistas', 'Negociás términos: precio, earnout, management'],
+    buyer: ['Enviás Letter of Intent (LOI)', 'Coordinás el cierre con tus asesores legales'],
+    color: 'border-purple-400',
+  },
+];
+
+export function Proceso() {
+  const { setSellerWizardOpen, setBuyerWizardOpen } = useAppContext();
 
   return (
-    <header className="bg-paper border-b border-border-strong sticky top-0 z-50">
-      <div className="container-custom relative z-50 bg-paper">
-        <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex flex-col gap-px">
-            <span className="font-serif text-[20px] font-bold tracking-[-0.02em] text-ink leading-none">Meridian</span>
-            <span className="font-sans text-[8px] tracking-[0.2em] uppercase text-ink-mute">Mercado privado de empresas</span>
-          </Link>
+    <div className="animate-in fade-in duration-500">
+      <section className="bg-paper-deep pt-16 pb-20 border-b border-border-strong">
+        <div className="container-custom max-w-3xl">
+          <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-accent mb-4">Metodología</div>
+          <h1 className="font-serif text-[36px] sm:text-[48px] md:text-[60px] font-bold leading-[0.95] tracking-[-0.025em] text-ink mb-6">
+            Un proceso riguroso de principio a fin
+          </h1>
+          <p className="text-[16px] text-ink-soft leading-[1.65] font-light">
+            Meridian estructura cada transacción con las mismas fases que usan los bancos de inversión globales, adaptadas al mid-market argentino.
+          </p>
+        </div>
+      </section>
 
-          <nav className="hidden md:flex items-center gap-7">
-            <Link to="/mercado" className="text-[11px] font-medium tracking-[0.08em] uppercase text-ink-soft hover:text-ink transition-colors">Mercado</Link>
-            <Link to="/proceso" className="text-[11px] font-medium tracking-[0.08em] uppercase text-ink-soft hover:text-ink transition-colors">Proceso</Link>
-            <Link to="/compradores" className="text-[11px] font-medium tracking-[0.08em] uppercase text-ink-soft hover:text-ink transition-colors">Compradores</Link>
-            <Link to="/nosotros" className="text-[11px] font-medium tracking-[0.08em] uppercase text-ink-soft hover:text-ink transition-colors">Nosotros</Link>
-            {user?.role === 'admin' && (
-              <Link to="/dashboard" className="text-[11px] font-medium tracking-[0.08em] uppercase text-accent hover:text-ink transition-colors">Admin</Link>
-            )}
-          </nav>
+      <section className="py-16 bg-paper">
+        <div className="container-custom">
+          <div className="flex flex-col gap-6">
+            {PHASES.map((phase, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }} viewport={{ once: true }}
+                className={`border-l-4 ${phase.color} bg-paper border border-border-strong pl-6 pr-6 py-8`}>
+                <div className="flex flex-wrap items-center gap-4 mb-6">
+                  <span className="font-mono text-[9px] uppercase tracking-widest text-ink-mute">{phase.phase}</span>
+                  <h3 className="font-serif text-[22px] md:text-[26px] font-bold text-ink">{phase.title}</h3>
+                  <span className="ml-auto font-mono text-[10px] text-ink-mute border border-border-strong px-3 py-1">{phase.duration}</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-3">🏢 Vendedor</div>
+                    <ul className="flex flex-col gap-2">
+                      {phase.seller.map((s, j) => (
+                        <li key={j} className="flex items-start gap-2 text-[13px] text-ink-soft">
+                          <span className="text-accent mt-0.5 shrink-0">→</span> {s}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-3">🔍 Comprador</div>
+                    <ul className="flex flex-col gap-2">
+                      {phase.buyer.map((b, j) => (
+                        <li key={j} className="flex items-start gap-2 text-[13px] text-ink-soft">
+                          <span className="text-blue-400 mt-0.5 shrink-0">→</span> {b}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
 
-          <div className="flex gap-2 sm:gap-3 items-center">
-            <div className="hidden sm:flex items-center gap-[5px] font-mono text-[9px] tracking-[0.1em] text-ink-mute border border-border-subtle py-[3px] px-2">
-              <span className="w-[5px] h-[5px] rounded-full bg-[#4ade80] animate-pulse-dot"></span>
-              MERCADO ACTIVO
-            </div>
-
-            {user ? (
-              <div className="flex items-center gap-2 ml-1">
-                <NotificationBell />
-                <button onClick={() => setProfileModalOpen(true)}
-                  className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center font-medium text-[10px] tracking-wider">
-                  {user.initials}
-                </button>
-              </div>
-            ) : (
-              <div className="flex gap-2 items-center">
-                <button onClick={() => setLoginModalOpen(true)} className="inline-flex btn-ghost !py-[9px] !px-3 sm:!px-4 !text-[9px]">Ingresar</button>
-                <button onClick={() => setLoginModalOpen(true)} className="btn-primary !py-[9px] !px-3 sm:!px-4 !text-[9px] whitespace-nowrap">Listar</button>
-              </div>
-            )}
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
+            <button onClick={() => setSellerWizardOpen(true)} className="btn-primary">Listar mi Empresa</button>
+            <button onClick={() => setBuyerWizardOpen(true)} className="btn-ghost">Registrarme como Comprador</button>
           </div>
         </div>
-      </div>
-
-      <div className="md:hidden border-t border-border-subtle bg-paper overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        <nav className="flex items-center min-w-max px-2">
-          {[['Mercado','/mercado'],['Proceso','/proceso'],['Compradores','/compradores'],['Nosotros','/nosotros']].map(([label, path]) => (
-            <Link key={path} to={path}
-              className={`text-[10px] font-medium tracking-[0.1em] uppercase px-3 py-3 border-b-2 transition-colors ${location.pathname === path ? 'text-ink border-ink' : 'text-ink-soft border-transparent hover:text-ink'}`}>
-              {label}
-            </Link>
-          ))}
-          {user?.role === 'admin' && (
-            <Link to="/dashboard" className="text-[10px] font-medium tracking-[0.1em] uppercase px-3 py-3 border-b-2 text-accent border-transparent">Admin</Link>
-          )}
-        </nav>
-      </div>
-    </header>
+      </section>
+    </div>
   );
 }
