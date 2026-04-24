@@ -1,70 +1,38 @@
-import { useState, useRef, useEffect } from 'react';
-import { Bell } from 'lucide-react';
-import { useAppContext } from '../AppContext';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { getPublishedDeals } from '../lib/firestore';
+import type { Deal } from '../types';
 
-const TYPE_ICON: Record<string, string> = {
-  nda_request: '📋', nda_signed: '✅', dataroom_access: '🔓',
-  ioi_received: '💼', deal_published: '🚀', deal_rejected: '❌'
-};
+// Fallback static items while loading
+const FALLBACK = [
+  { id: 'MRD-001', industria: 'SaaS / Tech', region: 'CABA', ebitda: 910000, crecimiento: 35, askingPrice: 7100000 },
+  { id: 'MRD-002', industria: 'Agro', region: 'Córdoba', ebitda: 1400000, crecimiento: 18, askingPrice: 6300000 },
+  { id: 'MRD-003', industria: 'Salud', region: 'CABA', ebitda: 680000, crecimiento: 22, askingPrice: 4200000 },
+];
 
-export function NotificationBell() {
-  const { notifications, unreadCount, markRead } = useAppContext();
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
+export function Ticker() {
+  const [deals, setDeals] = useState<Partial<Deal>[]>(FALLBACK);
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    getPublishedDeals().then(d => { if (d.length > 0) setDeals(d); }).catch(() => {});
   }, []);
 
-  const handleClick = async (n: typeof notifications[0]) => {
-    await markRead(n.id);
-    if (n.dealId) navigate(`/deal/${n.dealId}`);
-    setOpen(false);
-  };
+  const fmtUSD = (n: number) => `USD ${(n / 1_000_000).toFixed(1)}M`;
+  const items = [...deals, ...deals, ...deals];
 
   return (
-    <div className="relative" ref={ref}>
-      <button onClick={() => setOpen(o => !o)} className="relative p-2 hover:bg-paper-mid rounded transition-colors">
-        <Bell size={18} className="text-ink-soft" />
-        {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 w-4 h-4 bg-accent text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
-        )}
-      </button>
-
-      {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-paper border border-border-strong shadow-2xl z-50">
-          <div className="px-4 py-3 border-b border-border-subtle flex items-center justify-between">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-ink-mute">Notificaciones</span>
-            {unreadCount > 0 && <span className="text-[10px] text-accent font-mono">{unreadCount} nuevas</span>}
+    <div className="bg-ink overflow-hidden py-[9px] border-b border-white/10" aria-hidden="true">
+      <div className="flex animate-tick whitespace-nowrap w-max">
+        {items.map((d, i) => (
+          <div key={i} className="flex items-center gap-[18px] px-9 font-mono text-[11px] text-white/55 border-r border-white/10">
+            <span className="text-white/85 font-medium">{d.id}</span>
+            <span className="bg-white/10 px-[7px] py-[1px] rounded-sm text-[10px] text-white/50">{d.industria}</span>
+            <span>{d.region}</span>
+            <span className="text-white">EBITDA {fmtUSD(d.ebitda ?? 0)}</span>
+            <span className={(d.crecimiento ?? 0) > 15 ? 'text-[#4ade80]' : 'text-[#f87171]'}>+{d.crecimiento}%</span>
+            <span>{fmtUSD(d.askingPrice ?? 0)}</span>
           </div>
-          <div className="max-h-80 overflow-y-auto">
-            {notifications.length === 0 ? (
-              <div className="py-8 text-center text-ink-mute text-sm">Sin notificaciones</div>
-            ) : notifications.map(n => (
-              <button key={n.id} onClick={() => handleClick(n)}
-                className={`w-full text-left px-4 py-3 border-b border-border-subtle hover:bg-paper-mid transition-colors ${!n.read ? 'bg-accent-light/30' : ''}`}>
-                <div className="flex items-start gap-2">
-                  <span className="text-base">{TYPE_ICON[n.type] ?? '📌'}</span>
-                  <div>
-                    <div className="text-[12px] font-medium text-ink">{n.title}</div>
-                    <div className="text-[11px] text-ink-mute mt-0.5">{n.message}</div>
-                    <div className="text-[10px] text-ink-mute/60 font-mono mt-1">
-                      {n.createdAt?.toDate?.()?.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }) ?? ''}
-                    </div>
-                  </div>
-                  {!n.read && <span className="ml-auto w-2 h-2 rounded-full bg-accent shrink-0 mt-1"></span>}
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 }

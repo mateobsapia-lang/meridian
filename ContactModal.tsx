@@ -1,243 +1,148 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Modal } from '../components/Modal';
 import { useAppContext } from '../AppContext';
-import { createNotification } from '../lib/firestore';
+import { useNavigate } from 'react-router-dom';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import { getUserDeals } from '../lib/firestore';
 
-type AnalysisResult = {
-  score: number;
-  revenue: number | null;
-  ebitda: number | null;
-  summary: string;
-  strengths: string[];
-  concerns: string[];
-  recommendation: 'approve' | 'review' | 'reject';
-  needsManualReview: boolean;
-  reason?: string;
-};
+export function ProfileModal() {
+  const { isProfileModalOpen, setProfileModalOpen, user, logout, showToast, login } = useAppContext();
+  const navigate = useNavigate();
+  const [switching, setSwitching] = useState(false);
+  const [confirmSwitch, setConfirmSwitch] = useState(false);
 
-export function AIAnalysisModal({ isOpen, onClose, onApprove }: {
-  isOpen: boolean;
-  onClose: () => void;
-  onApprove: (data: Partial<AnalysisResult>) => void;
-}) {
-  const { user, showToast } = useAppContext();
-  const [file, setFile] = useState<File | null>(null);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [result, setResult] = useState<AnalysisResult | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  if (!user) return null;
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (f) setFile(f);
-  };
+  const handleSwitchRole = async () => {
+    if (!confirmSwitch) {
+      setConfirmSwitch(true);
+      return;
+    }
 
-  const toBase64 = (file: File): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve((reader.result as string).split(',')[1]);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-
-  const analyze = async () => {
-    if (!file) return;
-    setAnalyzing(true);
-    setResult(null);
-
+    setSwitching(true);
     try {
-      const base64 = await toBase64(file);
-      const isPDF = file.type === 'application/pdf';
-
-      const prompt = `Sos un analista senior de M&A especializado en PyMEs argentinas. 
-Analizá el documento adjunto (puede ser un balance, estado de resultados, o información financiera de una empresa).
-
-Extraé y analizá:
-1. Revenue/Ventas totales (último período disponible, en USD o ARS)
-2. EBITDA o resultado operativo
-3. Tendencia de crecimiento
-4. Deudas o pasivos significativos
-5. Fortalezas del negocio
-6. Riesgos o alertas
-
-Respondé SOLO en JSON válido con esta estructura exacta:
-{
-  "score": número del 0 al 100,
-  "revenue": número en USD (null si no podés determinarlo),
-  "ebitda": número en USD (null si no podés determinarlo),
-  "summary": "resumen ejecutivo de 2-3 oraciones",
-  "strengths": ["fortaleza 1", "fortaleza 2"],
-  "concerns": ["preocupación 1", "preocupación 2"],
-  "recommendation": "approve" | "review" | "reject",
-  "needsManualReview": boolean,
-  "reason": "razón si needsManualReview es true"
-}
-
-Si el documento no tiene información financiera suficiente, poné needsManualReview: true.`;
-
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          messages: [{
-            role: 'user',
-            content: [
-              ...(isPDF ? [{
-                type: 'document',
-                source: { type: 'base64', media_type: 'application/pdf', data: base64 }
-              }] : [{
-                type: 'image',
-                source: { type: 'base64', media_type: file.type, data: base64 }
-              }]),
-              { type: 'text', text: prompt }
-            ]
-          }]
-        })
-      });
-
-      const data = await response.json();
-      const text = data.content?.[0]?.text ?? '';
-      const clean = text.replace(/```json|```/g, '').trim();
-      const parsed: AnalysisResult = JSON.parse(clean);
-      setResult(parsed);
-
-      // Si necesita revisión manual, notificar al admin
-      if (parsed.needsManualReview && user) {
-        // En producción esto debería ir a una colección de admin reviews
-        await createNotification(
-          'ADMIN_UID', // Reemplazar con UID real del admin
-          'nda_request',
-          '⚠ Revisión manual requerida',
-          `Un vendedor subió documentos que requieren revisión manual: ${file.name}`,
+      // Si es vendedor, verificar que no tenga deals activos
+      if (user.role === 'seller') {
+        const deals = await getUserDeals(user.uid);
+        const activeDeals = deals.filter(d =>
+          ['under_review', 'published', 'nda_phase', 'loi_received', 'closing'].includes(d.status)
         );
-        showToast('Enviado a revisión manual — te contactaremos en 48hs');
+        if (activeDeals.length > 0) {
+          showToast(`No podés cambiar de rol: tenés ${activeDeals.length} deal(s) activo(s).`);
+          setSwitching(false);
+          setConfirmSwitch(false);
+          return;
+        }
       }
 
-    } catch (err) {
-      // Si falla la IA, pedir revisión manual
-      setResult({
-        score: 0,
-        revenue: null,
-        ebitda: null,
-        summary: 'No se pudo analizar el documento automáticamente.',
-        strengths: [],
-        concerns: [],
-        recommendation: 'review',
-        needsManualReview: true,
-        reason: 'Error en el análisis automático — revisión manual requerida'
-      });
+      const newRole = user.role === 'buyer' ? 'seller' : 'buyer';
+      await updateDoc(doc(db, 'users', user.uid), { role: newRole });
+
+      // Actualizar contexto
+      login({ ...user, role: newRole });
+      showToast(`Rol cambiado a ${newRole === 'buyer' ? 'Comprador' : 'Vendedor'}`);
+      setConfirmSwitch(false);
+      setProfileModalOpen(false);
+      navigate('/dashboard');
+    } catch {
+      showToast('Error al cambiar rol. Intentá de nuevo.');
     } finally {
-      setAnalyzing(false);
+      setSwitching(false);
     }
   };
 
-  const SCORE_COLOR = (s: number) => s >= 70 ? 'text-[#4ade80]' : s >= 40 ? 'text-amber-400' : 'text-red-400';
-  const REC_LABEL = { approve: '✅ Apto para publicar', review: '⚠ Requiere revisión', reject: '❌ No apto' };
+  const targetRole = user.role === 'buyer' ? 'Vendedor' : 'Comprador';
+  const isAdmin = user.role === 'admin';
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Análisis de Documentos con IA">
+    <Modal
+      isOpen={isProfileModalOpen}
+      onClose={() => { setProfileModalOpen(false); setConfirmSwitch(false); }}
+      title="Perfil de Usuario"
+    >
       <div className="flex flex-col gap-6">
-        <div className="bg-accent-light border border-accent/20 p-4 text-[12px] text-accent">
-          📄 Subí el balance o estado de resultados de tu empresa. Nuestra IA lo analizará en segundos y generará un score de calidad para agilizar la publicación.
-        </div>
-
-        {/* Upload area */}
-        <div
-          onClick={() => fileRef.current?.click()}
-          className="border-2 border-dashed border-border-strong hover:border-accent transition-colors p-8 text-center cursor-pointer"
-        >
-          <div className="text-3xl mb-3">📊</div>
-          <div className="font-medium text-ink text-[14px]">
-            {file ? file.name : 'Click para subir documento'}
+        {/* Avatar + info */}
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-accent text-white flex items-center justify-center font-medium font-serif text-[24px]">
+            {user.initials}
           </div>
-          <div className="text-[11px] text-ink-mute mt-1">PDF, imagen · Balance, estado de resultados, flujo de caja</div>
-          <input ref={fileRef} type="file" className="hidden" onChange={handleFile}
-            accept=".pdf,image/*" />
+          <div>
+            <div className="text-[14px] font-medium text-ink">{user.name}</div>
+            <div className="text-[12px] font-mono text-ink-mute">{user.email}</div>
+          </div>
         </div>
 
-        {file && !result && (
-          <button onClick={analyze} disabled={analyzing} className="btn-primary w-full">
-            {analyzing ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Analizando con IA...
-              </span>
-            ) : 'Analizar documento →'}
-          </button>
-        )}
+        {/* Rol actual */}
+        <div className="flex flex-col gap-2 border-t border-border-strong pt-5">
+          <div className="text-[10px] font-medium tracking-[0.1em] uppercase text-ink-mute mb-1">
+            Tipo de cuenta
+          </div>
+          <div className={`flex items-center gap-3 px-4 py-3 border text-[13px] font-medium ${
+            isAdmin ? 'border-accent/30 bg-accent-light text-accent' :
+            user.role === 'buyer' ? 'border-blue-200 bg-blue-50 text-blue-700' :
+            'border-border-subtle bg-paper-deep text-ink-soft'
+          }`}>
+            <span className="text-lg">
+              {isAdmin ? '⚡' : user.role === 'buyer' ? '🔍' : '🏢'}
+            </span>
+            {isAdmin ? 'Administrador' : user.role === 'buyer' ? 'Comprador Institucional / Inversor' : 'Vendedor / Propietario'}
+          </div>
 
-        {/* Result */}
-        {result && (
-          <div className="flex flex-col gap-4">
-            <div className="border border-border-strong bg-paper-deep p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-1">Score de calidad</div>
-                  <div className={`font-serif text-[48px] font-bold ${SCORE_COLOR(result.score)}`}>{result.score}</div>
+          {/* Switch rol — solo buyer/seller, no admin */}
+          {!isAdmin && (
+            <div className="mt-2">
+              {!confirmSwitch ? (
+                <button
+                  onClick={() => setConfirmSwitch(true)}
+                  className="w-full text-[11px] font-mono tracking-wider text-ink-mute border border-border-strong px-4 py-2.5 hover:bg-paper-mid transition-colors text-left flex items-center justify-between"
+                >
+                  <span>Cambiar a {targetRole}</span>
+                  <span>→</span>
+                </button>
+              ) : (
+                <div className="border border-amber-300 bg-amber-50 p-4 flex flex-col gap-3">
+                  <p className="text-[12px] text-amber-800">
+                    {user.role === 'seller'
+                      ? `¿Confirmar cambio a Comprador? Si tenés deals activos no podrás cambiar.`
+                      : `¿Confirmar cambio a Vendedor? Perderás la vista de comprador.`
+                    }
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSwitchRole}
+                      disabled={switching}
+                      className="flex-1 text-[11px] font-medium px-3 py-2 bg-amber-600 text-white hover:bg-amber-700 transition-colors"
+                    >
+                      {switching ? 'Cambiando...' : 'Confirmar'}
+                    </button>
+                    <button
+                      onClick={() => setConfirmSwitch(false)}
+                      className="flex-1 text-[11px] font-medium px-3 py-2 border border-border-strong text-ink-soft hover:bg-paper-mid transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-1">Recomendación</div>
-                  <div className="font-medium text-[13px] text-ink">{REC_LABEL[result.recommendation]}</div>
-                </div>
-              </div>
-              <p className="text-[13px] text-ink-soft leading-relaxed border-t border-border-subtle pt-4">{result.summary}</p>
+              )}
             </div>
+          )}
+        </div>
 
-            {result.revenue && (
-              <div className="grid grid-cols-2 gap-3 text-[12px]">
-                <div className="border border-border-subtle p-3">
-                  <div className="font-mono text-[9px] text-ink-mute uppercase tracking-widest mb-1">Revenue detectado</div>
-                  <div className="font-mono font-medium text-ink">USD {(result.revenue / 1000).toFixed(0)}K</div>
-                </div>
-                {result.ebitda && (
-                  <div className="border border-border-subtle p-3">
-                    <div className="font-mono text-[9px] text-ink-mute uppercase tracking-widest mb-1">EBITDA detectado</div>
-                    <div className="font-mono font-medium text-ink">USD {(result.ebitda / 1000).toFixed(0)}K</div>
-                  </div>
-                )}
-              </div>
-            )}
+        {/* Acciones */}
+        <button
+          onClick={() => { setProfileModalOpen(false); navigate('/dashboard'); }}
+          className="btn-primary w-full"
+        >
+          Mi Panel (Workspace)
+        </button>
 
-            {result.strengths.length > 0 && (
-              <div>
-                <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-2">Fortalezas</div>
-                {result.strengths.map((s, i) => (
-                  <div key={i} className="flex items-start gap-2 text-[12px] text-ink-soft py-1">
-                    <span className="text-[#4ade80] shrink-0">✓</span> {s}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {result.concerns.length > 0 && (
-              <div>
-                <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-2">Alertas</div>
-                {result.concerns.map((c, i) => (
-                  <div key={i} className="flex items-start gap-2 text-[12px] text-ink-soft py-1">
-                    <span className="text-amber-400 shrink-0">⚠</span> {c}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {result.needsManualReview ? (
-              <div className="bg-amber-50 border border-amber-300 p-4 text-[12px] text-amber-800">
-                <strong>Revisión manual requerida.</strong> {result.reason ?? 'Nuestro equipo revisará tu documentación y te contactará en 24-48hs hábiles.'}
-              </div>
-            ) : (
-              <button onClick={() => onApprove({ revenue: result.revenue ?? undefined, ebitda: result.ebitda ?? undefined })}
-                className="btn-primary w-full">
-                Continuar con estos datos →
-              </button>
-            )}
-
-            <button onClick={() => { setResult(null); setFile(null); }}
-              className="text-[11px] font-mono text-ink-mute hover:text-ink text-center">
-              Subir otro documento
-            </button>
-          </div>
-        )}
+        <button
+          onClick={logout}
+          className="btn-ghost !border-[#fca5a5] !text-[#ef4444] hover:!bg-[#fef2f2] hover:!border-[#ef4444] self-start"
+        >
+          Cerrar sesión
+        </button>
       </div>
     </Modal>
   );

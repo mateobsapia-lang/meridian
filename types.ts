@@ -1,25 +1,70 @@
-export const deals = [
-  { 
-    id: 'MRD-2501', industry: 'SaaS / Tech', region: 'CABA', revenue: 'USD 3.2M', ebitda: 'USD 910K', margin: '28%', growth: '+35%', multiple: '7.8×', asking: 'USD 7.1M', match: 92, status: 'active', geo: 'Buenos Aires', 
-    desc: 'Plataforma B2B de gestión para PYMEs industriales. MRR estable, churn inferior al 2% anual. Contratos anuales con renovación automática.',
-    highlights: ['94% de ingresos recurrentes (ARR)', 'CAC recuperado en 4.2 meses', 'Equipo de desarrollo in-house'],
-    financials: [ { year: '2022', rev: 1.8, ebitda: 0.3 }, { year: '2023', rev: 2.4, ebitda: 0.55 }, { year: '2024', rev: 3.2, ebitda: 0.91 } ]
-  },
-  { 
-    id: 'MRD-2502', industry: 'Agro', region: 'Córdoba', revenue: 'USD 5.1M', ebitda: 'USD 1.4M', margin: '27%', growth: '+18%', multiple: '4.5×', asking: 'USD 6.3M', match: 78, status: 'active', geo: 'Córdoba', 
-    desc: 'Empresa agroexportadora con contratos de largo plazo. Activos propios. Certificación orgánica vigente.',
-    highlights: ['Exportaciones representan el 65% del revenue', '1,200 hectáreas propias, 800 arrendadas', 'Acuerdos forward ya firmados para 2026'],
-    financials: [ { year: '2022', rev: 3.6, ebitda: 0.9 }, { year: '2023', rev: 4.3, ebitda: 1.1 }, { year: '2024', rev: 5.1, ebitda: 1.4 } ]
-  },
-  { 
-    id: 'MRD-2503', industry: 'Salud', region: 'CABA', revenue: 'USD 2.8M', ebitda: 'USD 680K', margin: '24%', growth: '+22%', multiple: '6.2×', asking: 'USD 4.2M', match: 85, status: 'nda', geo: 'Buenos Aires', 
-    desc: 'Red de centros de diagnóstico por imágenes. Equipamiento propio amortizado. Convenios con prepagas.',
-    highlights: ['Equipamiento propio 100% amortizado', 'Convenios vigentes con 15 Obras Sociales y Prepagas', 'Ubicaciones premium con contratos a 10 años'],
-    financials: [ { year: '2022', rev: 1.9, ebitda: 0.4 }, { year: '2023', rev: 2.3, ebitda: 0.52 }, { year: '2024', rev: 2.8, ebitda: 0.68 } ]
-  },
-  { id: 'MRD-2504', industry: 'Manufactura', region: 'Santa Fe', revenue: 'USD 7.2M', ebitda: 'USD 1.1M', margin: '15%', growth: '+9%', multiple: '3.8×', asking: 'USD 4.2M', match: 61, status: 'active', geo: 'Santa Fe', desc: 'Manufactura de insumos para construcción. Clientes institucionales. Planta propia.', highlights: ['Planta industrial de 5,000m2 propia', 'Tecnología de extrusión renovada en 2021', 'Cartera de más de 400 corralones adheridos'], financials: [ { year: '2022', rev: 6.1, ebitda: 0.85 }, { year: '2023', rev: 6.6, ebitda: 0.95 }, { year: '2024', rev: 7.2, ebitda: 1.1 } ] },
-  { id: 'MRD-2505', industry: 'Retail', region: 'Buenos Aires', revenue: 'USD 4.4M', ebitda: 'USD 620K', margin: '14%', growth: '+12%', multiple: '3.2×', asking: 'USD 2.0M', match: 44, status: 'active', geo: 'GBA', desc: 'Cadena de retail especializado, 8 puntos de venta propios, marca registrada con 15 años de trayectoria.', highlights: ['8 locales propios en ubicaciones estratégicas', 'Marca registrada con alto top of mind regional', 'Plataforma e-commerce representa 18% de ventas'], financials: [ { year: '2022', rev: 3.5, ebitda: 0.45 }, { year: '2023', rev: 3.9, ebitda: 0.55 }, { year: '2024', rev: 4.4, ebitda: 0.62 } ] },
-  { id: 'MRD-2506', industry: 'Servicios', region: 'CABA', revenue: 'USD 1.9M', ebitda: 'USD 540K', margin: '28%', growth: '+41%', multiple: '8.1×', asking: 'USD 4.4M', match: 88, status: 'active', geo: 'Buenos Aires', desc: 'Consultora de servicios profesionales B2B. Contratos recurrentes. Equipo senior de 22 personas.', highlights: ['Retención de clientes corporativos > 90%', 'Costo de estructura altamente flexibilizado', 'Management dispuesto a quedarse 24 meses post-deal'], financials: [ { year: '2022', rev: 1.0, ebitda: 0.2 }, { year: '2023', rev: 1.35, ebitda: 0.35 }, { year: '2024', rev: 1.9, ebitda: 0.54 } ] },
-  { id: 'MRD-2507', industry: 'SaaS / Tech', region: 'Mendoza', revenue: 'USD 1.1M', ebitda: 'USD 340K', margin: '31%', growth: '+55%', multiple: '9.4×', asking: 'USD 3.2M', match: 90, status: 'active', geo: 'Mendoza', desc: 'SaaS vertical para gestión de bodegas y exportación. Clientes en Argentina, Chile y Uruguay.', highlights: ['Líder indiscutido en nicho de bodegas', 'Expansión traccionando orgánicamente en Chile', 'API integrada con entes aduaneros'], financials: [ { year: '2022', rev: 0.45, ebitda: 0.08 }, { year: '2023', rev: 0.71, ebitda: 0.18 }, { year: '2024', rev: 1.1, ebitda: 0.34 } ] },
-  { id: 'MRD-2508', industry: 'Agro', region: 'Entre Ríos', revenue: 'USD 3.8M', ebitda: 'USD 920K', margin: '24%', growth: '+7%', multiple: '4.1×', asking: 'USD 3.8M', match: 70, status: 'nda', geo: 'Entre Ríos', desc: 'Empresa citrícola con producción integrada. Exportación a Europa. 180 hectáreas propias.', highlights: ['Certificación GlobalGAP para acceso a mercado europeo', 'Sistema de riego automatizado instalado', 'Empaque propio con capacidad ociosa del 30%'], financials: [ { year: '2022', rev: 3.3, ebitda: 0.75 }, { year: '2023', rev: 3.55, ebitda: 0.85 }, { year: '2024', rev: 3.8, ebitda: 0.92 } ] },
-];
+import { useState, useRef, useEffect } from 'react';
+import { Bell } from 'lucide-react';
+import { useAppContext } from '../AppContext';
+import { useNavigate } from 'react-router-dom';
+
+const TYPE_ICON: Record<string, string> = {
+  nda_request: '📋', nda_signed: '✅', dataroom_access: '🔓',
+  ioi_received: '💼', deal_published: '🚀', deal_rejected: '❌'
+};
+
+export function NotificationBell() {
+  const { notifications, unreadCount, markRead } = useAppContext();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const handleClick = async (n: typeof notifications[0]) => {
+    await markRead(n.id);
+    if (n.dealId) navigate(`/deal/${n.dealId}`);
+    setOpen(false);
+  };
+
+  return (
+    <div className="relative" ref={ref}>
+      <button onClick={() => setOpen(o => !o)} className="relative p-2 hover:bg-paper-mid rounded transition-colors">
+        <Bell size={18} className="text-ink-soft" />
+        {unreadCount > 0 && (
+          <span className="absolute top-1 right-1 w-4 h-4 bg-accent text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-2 w-80 bg-paper border border-border-strong shadow-2xl z-50">
+          <div className="px-4 py-3 border-b border-border-subtle flex items-center justify-between">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-ink-mute">Notificaciones</span>
+            {unreadCount > 0 && <span className="text-[10px] text-accent font-mono">{unreadCount} nuevas</span>}
+          </div>
+          <div className="max-h-80 overflow-y-auto">
+            {notifications.length === 0 ? (
+              <div className="py-8 text-center text-ink-mute text-sm">Sin notificaciones</div>
+            ) : notifications.map(n => (
+              <button key={n.id} onClick={() => handleClick(n)}
+                className={`w-full text-left px-4 py-3 border-b border-border-subtle hover:bg-paper-mid transition-colors ${!n.read ? 'bg-accent-light/30' : ''}`}>
+                <div className="flex items-start gap-2">
+                  <span className="text-base">{TYPE_ICON[n.type] ?? '📌'}</span>
+                  <div>
+                    <div className="text-[12px] font-medium text-ink">{n.title}</div>
+                    <div className="text-[11px] text-ink-mute mt-0.5">{n.message}</div>
+                    <div className="text-[10px] text-ink-mute/60 font-mono mt-1">
+                      {n.createdAt?.toDate?.()?.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }) ?? ''}
+                    </div>
+                  </div>
+                  {!n.read && <span className="ml-auto w-2 h-2 rounded-full bg-accent shrink-0 mt-1"></span>}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
