@@ -28,6 +28,7 @@ export function ValuationCalculator() {
   const [isRecurring, setIsRecurring] = useState(false);
   const [crecimiento, setCrecimiento] = useState(15); // % YoY
   const [activeMethod, setActiveMethod] = useState<'ebitda'|'revenue'|'dcf'>('ebitda');
+  const [showDetail, setShowDetail] = useState(false);
 
   const ind = INDUSTRIES[selectedIdx];
   const ebitda = revenue * (margin / 100);
@@ -136,20 +137,33 @@ export function ValuationCalculator() {
             </div>
           </button>
 
-          {/* Metodología selector */}
-          <div>
-            <div className="font-mono text-[9px] uppercase tracking-widest text-white/30 mb-2">Metodología de valuación</div>
-            <div className="grid grid-cols-3 gap-2">
+          {/* Desglose expandible — oculto por defecto */}
+          <button onClick={() => setShowDetail(!showDetail)}
+            className="flex items-center justify-between w-full text-left border border-white/10 px-4 py-2.5 hover:bg-white/5 transition-colors">
+            <span className="font-mono text-[10px] text-white/40 uppercase tracking-widest">
+              {showDetail ? 'Ocultar desglose' : '¿Cómo se calculó este número? →'}
+            </span>
+            <span className="text-white/30 text-[10px]">{showDetail ? '▲' : '▼'}</span>
+          </button>
+          {showDetail && (
+            <div className="border border-white/10 p-4 flex flex-col gap-3 bg-white/[0.02]">
+              <div className="font-mono text-[9px] uppercase tracking-widest text-white/30 mb-1">3 metodologías · consenso ponderado</div>
               {(Object.keys(methods) as Array<'ebitda'|'revenue'|'dcf'>).map(m => (
-                <button key={m} onClick={() => setActiveMethod(m)}
-                  className={`py-2.5 px-3 border text-left transition-all ${activeMethod === m ? 'border-accent bg-accent/10 text-accent' : 'border-white/10 text-white/40 hover:border-white/30'}`}>
-                  <div className="font-mono text-[8px] uppercase tracking-widest mb-0.5">{m.toUpperCase()}</div>
-                  <div className="font-mono text-[11px] font-medium">{methods[m].mult}</div>
-                </button>
+                <div key={m} className="flex items-center justify-between text-[11px]">
+                  <div>
+                    <span className="font-mono text-white/50 uppercase text-[9px]">{methods[m].label}</span>
+                    <span className="text-white/30 font-mono text-[9px] ml-2">{methods[m].mult}</span>
+                  </div>
+                  <span className="font-mono text-white/60">
+                    {fmt(methods[m].min)}–{fmt(methods[m].max)}
+                  </span>
+                </div>
               ))}
+              <div className="border-t border-white/10 pt-2 text-[10px] text-white/30 font-mono">
+                Ponderación: 50% EBITDA · 25% Revenue · 25% DCF
+              </div>
             </div>
-            <p className="text-[10px] text-white/30 font-mono mt-2 leading-relaxed">{current.desc}</p>
-          </div>
+          )}
         </div>
 
         {/* RIGHT — Output */}
@@ -162,50 +176,27 @@ export function ValuationCalculator() {
               <div className="font-mono font-medium text-white" style={{ fontSize:'clamp(15px,1.8vw,20px)' }}>USD {fmt(ebitda)}</div>
             </div>
             <div>
-              <div className="font-mono text-[9px] uppercase tracking-widest text-white/30 mb-1">{current.label}</div>
-              <div className="font-mono font-medium text-accent" style={{ fontSize:'clamp(15px,1.8vw,20px)' }}>{current.mult}</div>
+              <div className="font-mono text-[9px] uppercase tracking-widest text-white/30 mb-1">Consenso 3 métodos</div>
+              <div className="font-mono font-medium text-accent" style={{ fontSize:'clamp(15px,1.8vw,20px)' }}>{ebitdaMultEfectivo.toFixed(1)}× EBITDA</div>
             </div>
           </div>
 
           {/* Rango activo */}
-          <div className="border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-6 text-center">
+          {/* Consenso como resultado principal */}
+          <div className="border border-accent/20 bg-accent/5 p-6 text-center">
             <div className="font-mono text-[8px] uppercase tracking-[0.2em] text-accent mb-4">
-              Rango de Valoración — {current.label}
+              Tu empresa vale aproximadamente
             </div>
             <div className="flex items-center justify-center gap-3">
               <span className="font-serif font-bold text-white tracking-tight" style={{ fontSize:'clamp(1.6rem,3.5vw,2.8rem)' }}>
-                {fmt(current.min)}
+                {fmt(consensoMin)}
               </span>
               <span className="w-6 h-px bg-white/20 shrink-0"/>
               <span className="font-serif font-bold text-white tracking-tight" style={{ fontSize:'clamp(1.6rem,3.5vw,2.8rem)' }}>
-                {fmt(current.max)}
+                {fmt(consensoMax)}
               </span>
             </div>
-            <div className="font-mono text-[8px] text-white/30 mt-4 uppercase tracking-widest">No constituye oferta vinculante</div>
-          </div>
-
-          {/* Consenso de los 3 métodos */}
-          <div className="border border-accent/20 bg-accent/5 p-4">
-            <div className="font-mono text-[9px] uppercase tracking-widest text-accent mb-3">
-              Consenso — 3 metodologías
-            </div>
-            <div className="flex items-center justify-between mb-3">
-              <span className="font-serif font-bold text-white" style={{ fontSize:'clamp(1.1rem,2vw,1.5rem)' }}>
-                {fmtFull(consensoMin)}
-              </span>
-              <span className="text-white/30 text-[12px]">—</span>
-              <span className="font-serif font-bold text-white" style={{ fontSize:'clamp(1.1rem,2vw,1.5rem)' }}>
-                {fmtFull(consensoMax)}
-              </span>
-            </div>
-            <div className="flex gap-2 text-[9px] font-mono text-white/30">
-              {Object.entries(methods).map(([k, v]) => (
-                <div key={k} className="flex-1 text-center">
-                  <div className="text-white/50 mb-0.5">{k.toUpperCase()}</div>
-                  <div>{fmt(v.min)}–{fmt(v.max)}</div>
-                </div>
-              ))}
-            </div>
+            <div className="font-mono text-[8px] text-white/30 mt-3 uppercase tracking-widest">Estimación · No constituye oferta vinculante</div>
           </div>
 
           <button onClick={() => setSellerWizardOpen(true)}

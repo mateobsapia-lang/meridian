@@ -14,7 +14,7 @@ export function WelcomeModal() {
   useEffect(() => {
     const accepted = localStorage.getItem('meridian_tc_accepted');
     if (!accepted) {
-      setTimeout(() => setShow(true), 800);
+      setTimeout(() => setShow(true), 30000);
     }
   }, []);
 
