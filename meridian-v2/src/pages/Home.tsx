@@ -113,7 +113,10 @@ export function Home() {
               <motion.div key={i} initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }}
                 transition={{ delay:i*0.1 }} viewport={{ once:true }}
                 className="bg-paper p-7 flex flex-col gap-4">
-                <div className="font-mono text-[32px] font-bold text-border-strong">{s.n}</div>
+                <div className="flex items-center gap-3 mb-1">
+                  <div className="font-serif text-[40px] font-bold text-ink/10 leading-none">{s.n}</div>
+                  <div className="flex-1 h-px bg-border-strong" />
+                </div>
                 <div>
                   <h3 className="font-serif text-[17px] font-bold text-ink mb-2">{s.title}</h3>
                   <p className="text-[13px] text-ink-soft leading-relaxed">{s.desc}</p>
@@ -142,14 +145,16 @@ export function Home() {
             {/* 1 — DIAGNÓSTICO DE VENDIBILIDAD */}
             <motion.div initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }}
               transition={{ delay:0 }} viewport={{ once:true }}
-              className="bg-paper p-8 flex flex-col gap-5 group">
-              <div className="w-12 h-12 bg-ink flex items-center justify-center text-2xl shrink-0">🔬</div>
+              className="bg-paper p-6 sm:p-8 flex flex-col gap-4 sm:gap-5 group border border-border-strong md:border-0">
+              <div className="flex items-center gap-3 sm:block">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-ink flex items-center justify-center text-xl sm:text-2xl shrink-0">🔬</div>
               <div>
-                <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-2">Para vendedores · 5 min</div>
-                <h3 className="font-serif text-[20px] font-bold text-ink mb-2">Diagnóstico de Vendibilidad</h3>
-                <p className="text-[13px] text-ink-soft leading-relaxed">
+                <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-1 sm:mb-2">Para vendedores · 5 min</div>
+                <h3 className="font-serif text-[18px] sm:text-[20px] font-bold text-ink mb-1 sm:mb-2">Diagnóstico de Vendibilidad</h3>
+                <p className="text-[13px] text-ink-soft leading-relaxed hidden sm:block">
                   8 preguntas. La IA analiza qué tan lista está tu empresa para el mercado y qué factores reducen tu precio de venta.
                 </p>
+              </div>
               </div>
               <ul className="flex flex-col gap-1.5">
                 {['Score de vendibilidad 0-100','Factores que reducen tu valuación','Plan de acción priorizado'].map(b=>(
@@ -170,18 +175,19 @@ export function Home() {
             {/* 2 — REPORTE DE VALUACIÓN */}
             <motion.div initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }}
               transition={{ delay:0.1 }} viewport={{ once:true }}
-              className="bg-paper p-8 flex flex-col gap-5 group border-x border-border-strong relative">
+              className="bg-paper p-6 sm:p-8 flex flex-col gap-4 sm:gap-5 group border border-border-strong md:border-x relative">
               <div className="absolute top-0 left-0 right-0 h-[3px] bg-accent" />
               <div className="absolute -top-3 left-8">
                 <span className="bg-accent text-white text-[8px] font-mono tracking-widest uppercase px-2 py-1">Más popular</span>
               </div>
-              <div className="w-12 h-12 bg-accent flex items-center justify-center text-2xl shrink-0">📊</div>
+              <div className="flex items-center gap-3 sm:block"><div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent flex items-center justify-center text-xl sm:text-2xl shrink-0">📊</div>
               <div>
-                <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-2">Para vendedores · 2 min</div>
-                <h3 className="font-serif text-[20px] font-bold text-ink mb-2">Reporte de Valuación Privado</h3>
-                <p className="text-[13px] text-ink-soft leading-relaxed">
+                <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-1 sm:mb-2">Para vendedores · 2 min</div>
+                <h3 className="font-serif text-[18px] sm:text-[20px] font-bold text-ink mb-1 sm:mb-2">Reporte de Valuación Privado</h3>
+                <p className="text-[13px] text-ink-soft leading-relaxed hidden sm:block">
                   Ingresás revenue y margen. La IA genera un reporte con múltiplos reales de transacciones argentinas y análisis de mercado.
                 </p>
+              </div>
               </div>
               <ul className="flex flex-col gap-1.5">
                 {['Rango conservador / agresivo','Comparables de transacciones 2024','Análisis de timing de salida'].map(b=>(
@@ -202,14 +208,15 @@ export function Home() {
             {/* 3 — SIMULADOR DE OFERTA */}
             <motion.div initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }}
               transition={{ delay:0.2 }} viewport={{ once:true }}
-              className="bg-paper p-8 flex flex-col gap-5 group">
-              <div className="w-12 h-12 bg-ink flex items-center justify-center text-2xl shrink-0">🎯</div>
+              className="bg-paper p-6 sm:p-8 flex flex-col gap-4 sm:gap-5 group border border-border-strong md:border-0">
+              <div className="flex items-center gap-3 sm:block"><div className="w-10 h-10 sm:w-12 sm:h-12 bg-ink flex items-center justify-center text-xl sm:text-2xl shrink-0">🎯</div>
               <div>
-                <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-2">Para compradores · 3 min</div>
-                <h3 className="font-serif text-[20px] font-bold text-ink mb-2">Simulador de Oportunidades</h3>
-                <p className="text-[13px] text-ink-soft leading-relaxed">
+                <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-1 sm:mb-2">Para compradores · 3 min</div>
+                <h3 className="font-serif text-[18px] sm:text-[20px] font-bold text-ink mb-1 sm:mb-2">Simulador de Oportunidades</h3>
+                <p className="text-[13px] text-ink-soft leading-relaxed hidden sm:block">
                   Definís tu tesis: ticket, industria, región. Te mostramos cuántos deals activos matchean y te alertamos cuando entra uno nuevo.
                 </p>
+              </div>
               </div>
               <ul className="flex flex-col gap-1.5">
                 {['Deals activos que matchean tu perfil','Alerta automática por email','Acceso prioritario al mercado'].map(b=>(
