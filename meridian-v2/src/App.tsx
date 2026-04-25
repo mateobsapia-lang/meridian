@@ -22,6 +22,7 @@ import { WelcomeModal } from './modals/WelcomeModal';
 import { DiagnosticoModal } from './modals/DiagnosticoModal';
 import { ReporteValuacionModal } from './modals/ReporteValuacionModal';
 import { SimuladorOfertaModal } from './modals/SimuladorOfertaModal';
+import { FinancialChatWidget } from './components/FinancialChatWidget';
 
 export default function App() {
   return (
@@ -53,6 +54,7 @@ export default function App() {
           <DiagnosticoModal />
           <ReporteValuacionModal />
           <SimuladorOfertaModal />
+          <FinancialChatWidget />
           <Toast />
         </div>
       </BrowserRouter>

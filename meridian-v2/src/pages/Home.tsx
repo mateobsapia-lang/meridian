@@ -13,10 +13,10 @@ const PLACEHOLDER_DEALS = [
 ];
 
 const HOW_IT_WORKS = [
-  { n:'01', title:'Listás tu empresa', desc:'Completás el wizard en 10 minutos. Nuestra IA analiza tu documentación y genera el teaser ciego.' },
+  { n:'01', title:'Listás tu empresa', desc:'10 minutos para listar. Nuestro equipo revisa cada empresa antes de publicarla — sin automatismos ciegos.' },
   { n:'02', title:'Compradores verificados la ven', desc:'Solo compradores con capital real acceden. NDA obligatorio para ver datos confidenciales.' },
   { n:'03', title:'Proceso estructurado', desc:'Due diligence, data room, IOI. Nuestros analistas coordinan cada etapa.' },
-  { n:'04', title:'Solo cobramos al éxito', desc:'5% del precio de cierre. Si no vendés, no pagás nada. Alineamos intereses.' },
+  { n:'04', title:'Solo cobramos al éxito', desc:'Sin éxito, sin cobro. Nuestros intereses van en la misma dirección que los tuyos.' },
 ];
 
 export function Home() {
@@ -38,7 +38,7 @@ export function Home() {
       <Ticker />
 
       {/* HERO */}
-      <section className="py-12 md:py-24 relative overflow-hidden">
+      <section className="py-10 md:py-16 relative overflow-hidden">
         <div className="absolute top-[-10%] right-[-5%] w-[400px] h-[400px] bg-accent/5 blur-[100px] rounded-full pointer-events-none" />
         <div className="container-custom relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-16 items-center">
@@ -52,7 +52,7 @@ export function Home() {
                 El mercado discreto donde se <em className="italic text-accent">transmiten</em> las empresas.
               </h1>
               <p className="text-[17px] text-ink-soft leading-[1.65] max-w-[520px] font-light mb-9">
-                Conectamos dueños de PyMEs rentables con compradores institucionales verificados. NDA digital, data room seguro, proceso estructurado.
+                El 80% de las PyMEs argentinas se venden por debajo de su valor real. No porque el mercado no pague — porque el dueño no supo cómo salir.
               </p>
               <div className="flex flex-wrap gap-3 mt-4">
                 <motion.div whileHover={{ scale:1.02 }} whileTap={{ scale:0.97 }}>
@@ -105,8 +105,8 @@ export function Home() {
       <section className="py-16 bg-paper-deep border-t border-border-strong">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-accent mb-2">Proceso</div>
-            <h2 className="font-serif text-[28px] md:text-[36px] font-bold text-ink tracking-[-0.02em]">Así funciona Meridian</h2>
+            <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-accent mb-2">Sin intermediarios innecesarios</div>
+            <h2 className="font-serif text-[28px] md:text-[36px] font-bold text-ink tracking-[-0.02em]">De la decisión al cierre, sin perder el control</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-border-strong border border-border-strong">
             {HOW_IT_WORKS.map((s,i) => (
@@ -249,8 +249,8 @@ export function Home() {
           {isPlaceholder && (
             <div className="mb-6 bg-accent-light border border-accent/30 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <div className="font-medium text-accent text-[14px] mb-1">El mercado te está esperando</div>
-                <div className="text-[13px] text-ink-soft">Sé el primero en listar tu empresa. Los compradores ya están registrados.</div>
+                <div className="font-medium text-accent text-[14px] mb-1">Compradores con capital ya están registrados</div>
+                <div className="text-[13px] text-ink-soft">Todavía no hay empresas disponibles. La tuya puede ser la primera en llegar.</div>
               </div>
               <button onClick={()=>setSellerWizardOpen(true)} className="btn-primary shrink-0">Listar mi empresa →</button>
             </div>
@@ -302,7 +302,7 @@ export function Home() {
         <div className="container-custom">
           <div className="max-w-2xl mx-auto text-center">
             <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-accent mb-3">Transparencia total</div>
-            <h2 className="font-serif text-[28px] md:text-[40px] font-bold mb-6">¿Cuánto cobra Meridian?</h2>
+            <h2 className="font-serif text-[28px] md:text-[40px] font-bold mb-6">Sin venta, sin cobro. Así de simple.</h2>
             <div className="bg-white/5 border border-white/10 p-8 mb-6">
               <div className="font-serif text-[56px] font-bold text-accent mb-2">5%</div>
               <div className="font-mono text-[12px] text-white/60 mb-6">del precio de cierre · Solo si la operación se concreta</div>
@@ -393,7 +393,7 @@ export function Home() {
       <section className="py-20 bg-paper border-t border-border-strong">
         <div className="container-custom text-center">
           <h2 className="font-serif text-[32px] md:text-[48px] font-bold leading-tight tracking-[-0.02em] text-ink mb-4">
-            El momento de vender bien es ahora.
+            Cada mes que esperás, tu empresa vale lo mismo. Tu ventana de salida, no.
           </h2>
           <p className="text-ink-mute text-[15px] mb-10 max-w-lg mx-auto">Sin costos anticipados. Sin compromisos. Solo resultados.</p>
           <div className="flex flex-wrap gap-4 justify-center">
