@@ -38,17 +38,17 @@ export function Home() {
       <Ticker />
 
       {/* HERO */}
-      <section className="py-10 md:py-16 relative overflow-hidden">
+      <section className="pt-8 pb-0 md:pt-14 md:pb-0 relative overflow-hidden">
         <div className="absolute top-[-10%] right-[-5%] w-[400px] h-[400px] bg-accent/5 blur-[100px] rounded-full pointer-events-none" />
         <div className="container-custom relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-16 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-16 items-center pb-12 md:pb-16">
             <motion.div initial={{ opacity:0, y:30 }} animate={{ opacity:1, y:0 }}
               transition={{ duration:0.9, ease:[0.16,1,0.3,1] }} className="md:col-span-7">
               <div className="inline-flex items-center gap-2 border border-accent/30 bg-accent-light px-3 py-1.5 mb-7">
                 <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                 <span className="font-mono text-[9px] tracking-[0.14em] uppercase text-accent">Edición de portada · ARG · {new Date().getFullYear()}</span>
               </div>
-              <h1 className="font-serif text-[36px] sm:text-[48px] md:text-[68px] font-bold leading-[0.95] tracking-[-0.025em] text-ink mb-7">
+              <h1 className="font-serif font-bold text-ink mb-7 text-fluid-hero">
                 El mercado discreto donde se <em className="italic text-accent">transmiten</em> las empresas.
               </h1>
               <p className="text-[15px] sm:text-[17px] text-ink-soft leading-[1.65] max-w-[520px] font-light mb-7">
@@ -106,7 +106,7 @@ export function Home() {
         <div className="container-custom">
           <div className="text-center mb-12">
             <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-accent mb-2">Sin intermediarios innecesarios</div>
-            <h2 className="font-serif text-[28px] md:text-[36px] font-bold text-ink tracking-[-0.02em]">De la decisión al cierre, sin perder el control</h2>
+            <h2 className="font-serif font-bold text-ink text-fluid-h2">De la decisión al cierre, sin perder el control</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-border-strong border border-border-strong overflow-hidden">
             {HOW_IT_WORKS.map((s,i) => (
@@ -132,7 +132,7 @@ export function Home() {
         <div className="container-custom">
           <div className="text-center mb-4">
             <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-accent mb-2">Herramientas gratuitas</div>
-            <h2 className="font-serif text-[28px] md:text-[40px] font-bold text-ink tracking-[-0.02em]">
+            <h2 className="font-serif font-bold text-ink text-fluid-h2">
               Decidí con datos, no con suposiciones
             </h2>
             <p className="text-[14px] text-ink-mute mt-3 max-w-lg mx-auto">
@@ -309,7 +309,7 @@ export function Home() {
         <div className="container-custom">
           <div className="max-w-2xl mx-auto text-center">
             <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-accent mb-3">Transparencia total</div>
-            <h2 className="font-serif text-[28px] md:text-[40px] font-bold mb-6">Sin venta, sin cobro. Así de simple.</h2>
+            <h2 className="font-serif font-bold mb-6 text-fluid-h2">Sin venta, sin cobro. Así de simple.</h2>
             <div className="bg-white/5 border border-white/10 p-8 mb-6">
               <div className="font-serif text-[56px] font-bold text-accent mb-2">5%</div>
               <div className="font-mono text-[12px] text-white/60 mb-6">del precio de cierre · Solo si la operación se concreta</div>
@@ -399,7 +399,7 @@ export function Home() {
       {/* CTA FINAL */}
       <section className="py-20 bg-paper border-t border-border-strong">
         <div className="container-custom text-center">
-          <h2 className="font-serif text-[26px] sm:text-[32px] md:text-[48px] font-bold leading-tight tracking-[-0.02em] text-ink mb-4">
+          <h2 className="font-serif font-bold text-ink mb-4 text-fluid-h2">
             Cada mes que esperás, tu empresa vale lo mismo. Tu ventana de salida, no.
           </h2>
           <p className="text-ink-mute text-[15px] mb-10 max-w-lg mx-auto">Sin costos anticipados. Sin compromisos. Solo resultados.</p>

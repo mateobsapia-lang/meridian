@@ -41,11 +41,40 @@
     @apply text-accent;
   }
   .container-custom {
-    @apply max-w-[1200px] mx-auto px-5 sm:px-8 md:px-[48px];
+    @apply max-w-[1280px] mx-auto;
+    padding-left: clamp(1.25rem, 5vw, 5rem);
+    padding-right: clamp(1.25rem, 5vw, 5rem);
   }
 }
 
 /* Custom Utilities */
+
+  /* Tipografía fluida — escala con el viewport, no con breakpoints */
+  .text-fluid-hero {
+    font-size: clamp(2.25rem, 6vw, 5rem);
+    line-height: 0.95;
+    letter-spacing: -0.025em;
+  }
+  .text-fluid-h2 {
+    font-size: clamp(1.75rem, 3.5vw, 3rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .text-fluid-h3 {
+    font-size: clamp(1.25rem, 2vw, 1.75rem);
+    line-height: 1.2;
+  }
+  /* Sección con sangrado editorial — el contenido puede romper el grid */
+  .section-bleed-right {
+    padding-right: 0;
+    margin-right: calc(-1 * clamp(1.25rem, 5vw, 5rem));
+  }
+  /* Espaciado de sección consistente y fluido */
+  .section-y {
+    padding-top: clamp(3rem, 6vw, 6rem);
+    padding-bottom: clamp(3rem, 6vw, 6rem);
+  }
+
 @layer utilities {
   .scrollbar-hide {
     -ms-overflow-style: none; /* IE and Edge */

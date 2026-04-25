@@ -2,143 +2,215 @@ import { useState } from 'react';
 import { useAppContext } from '../AppContext';
 
 const INDUSTRIES = [
-  { name: 'SaaS / Tecnología', multiplier: 7.5 },
-  { name: 'Salud / Clínicas y Laboratorios', multiplier: 6.0 },
-  { name: 'Servicios Profesionales B2B', multiplier: 5.5 },
-  { name: 'Alimentos y Bebidas', multiplier: 5.0 },
-  { name: 'Logística y Transporte', multiplier: 4.8 },
-  { name: 'Agro / Exportación', multiplier: 4.5 },
-  { name: 'Manufactura Industrial', multiplier: 4.2 },
-  { name: 'Otros Sectores', multiplier: 4.0 },
-  { name: 'Retail / Omnicanal', multiplier: 3.5 },
-  { name: 'Construcción e Ingeniería', multiplier: 3.5 },
+  { name: 'SaaS / Tecnología',            ebitdaMult: 7.5,  revMult: 3.5,  wacc: 0.18 },
+  { name: 'Salud / Clínicas',             ebitdaMult: 6.0,  revMult: 2.8,  wacc: 0.16 },
+  { name: 'Servicios Profesionales B2B',  ebitdaMult: 5.5,  revMult: 2.2,  wacc: 0.17 },
+  { name: 'Alimentos y Bebidas',          ebitdaMult: 5.0,  revMult: 1.8,  wacc: 0.15 },
+  { name: 'Logística y Transporte',       ebitdaMult: 4.8,  revMult: 1.5,  wacc: 0.16 },
+  { name: 'Agro / Exportación',           ebitdaMult: 4.5,  revMult: 1.4,  wacc: 0.15 },
+  { name: 'Manufactura Industrial',       ebitdaMult: 4.2,  revMult: 1.2,  wacc: 0.15 },
+  { name: 'Retail / Omnicanal',           ebitdaMult: 3.5,  revMult: 0.9,  wacc: 0.17 },
+  { name: 'Construcción e Ingeniería',    ebitdaMult: 3.5,  revMult: 0.8,  wacc: 0.16 },
+  { name: 'Otros Sectores',              ebitdaMult: 4.0,  revMult: 1.3,  wacc: 0.16 },
 ];
+
+const fmt = (v: number) =>
+  v >= 1_000_000 ? `${(v / 1_000_000).toFixed(2)}M` : `${(v / 1000).toFixed(0)}K`;
+
+const fmtFull = (v: number) =>
+  v >= 1_000_000 ? `USD ${(v / 1_000_000).toFixed(2)}M` : `USD ${(v / 1000).toFixed(0)}K`;
 
 export function ValuationCalculator() {
   const { setSellerWizardOpen } = useAppContext();
   const [revenue, setRevenue] = useState(2500000);
   const [margin, setMargin] = useState(20);
-  const [industryMult, setIndustryMult] = useState(4.2);
+  const [selectedIdx, setSelectedIdx] = useState(6); // Manufactura por defecto
   const [isRecurring, setIsRecurring] = useState(false);
+  const [crecimiento, setCrecimiento] = useState(15); // % YoY
+  const [activeMethod, setActiveMethod] = useState<'ebitda'|'revenue'|'dcf'>('ebitda');
 
+  const ind = INDUSTRIES[selectedIdx];
   const ebitda = revenue * (margin / 100);
-  const effectiveMultiple = isRecurring ? industryMult * 1.2 : industryMult;
-  const valMin = ebitda * effectiveMultiple * 0.85;
-  const valMax = ebitda * effectiveMultiple * 1.15;
-  const fmtUSD = (v: number) => `USD ${(v / 1_000_000).toFixed(2)}M`;
-  const fmtShort = (v: number) => v >= 1_000_000
-    ? `USD ${(v / 1_000_000).toFixed(1)}M`
-    : `USD ${(v / 1000).toFixed(0)}K`;
+  const recurringBonus = isRecurring ? 1.2 : 1.0;
+  const growthBonus = crecimiento > 20 ? 1.1 : crecimiento > 10 ? 1.05 : 1.0;
+
+  // Método 1: Múltiplo EBITDA
+  const ebitdaMultEfectivo = ind.ebitdaMult * recurringBonus * growthBonus;
+  const valEbitdaMin = ebitda * ebitdaMultEfectivo * 0.85;
+  const valEbitdaMax = ebitda * ebitdaMultEfectivo * 1.15;
+
+  // Método 2: Múltiplo de Revenue
+  const revMultEfectivo = ind.revMult * recurringBonus;
+  const valRevMin = revenue * revMultEfectivo * 0.80;
+  const valRevMax = revenue * revMultEfectivo * 1.20;
+
+  // Método 3: DCF simplificado (5 años, valor terminal)
+  const fcf = ebitda * 0.75; // FCF aprox como 75% del EBITDA
+  const g = crecimiento / 100; // tasa de crecimiento
+  const wacc = ind.wacc;
+  const terminalValue = (fcf * (1 + g)) / (wacc - Math.min(g, 0.05));
+  const pvFCF = fcf * (1 - Math.pow(1 + wacc, -5)) / wacc;
+  const pvTerminal = terminalValue / Math.pow(1 + wacc, 5);
+  const valDCF = pvFCF + pvTerminal;
+  const valDCFMin = valDCF * 0.82;
+  const valDCFMax = valDCF * 1.18;
+
+  // Rango consenso: promedio ponderado de los 3 métodos
+  const consensoMin = (valEbitdaMin * 0.5 + valRevMin * 0.25 + valDCFMin * 0.25);
+  const consensoMax = (valEbitdaMax * 0.5 + valRevMax * 0.25 + valDCFMax * 0.25);
+
+  const methods = {
+    ebitda: { min: valEbitdaMin, max: valEbitdaMax, mult: `${ebitdaMultEfectivo.toFixed(1)}×`, label: 'Múltiplo EBITDA', desc: 'Método más usado en M&A de PyMEs. Normaliza la rentabilidad operativa.' },
+    revenue: { min: valRevMin, max: valRevMax, mult: `${revMultEfectivo.toFixed(1)}×`, label: 'Múltiplo de Revenue', desc: 'Relevante en empresas de alto crecimiento con márgenes en expansión.' },
+    dcf: { min: valDCFMin, max: valDCFMax, mult: `${wacc*100}% WACC`, label: 'DCF (5 años)', desc: 'Descuento de flujos futuros a valor presente. Mayor precisión, más supuestos.' },
+  };
+
+  const current = methods[activeMethod];
 
   return (
-    <div className="border border-border-strong shadow-2xl overflow-hidden bg-[#0d0e10] w-full">
+    <div className="w-full overflow-hidden bg-[#0d0e10] shadow-2xl">
       {/* Header */}
-      <div className="bg-ink px-8 py-6 border-b border-white/10">
-        <div className="font-mono text-[9px] tracking-[0.16em] uppercase text-accent mb-1">Motor de Precisión</div>
-        <h2 className="font-serif text-[22px] md:text-[28px] font-bold text-white leading-tight">
+      <div className="px-6 md:px-10 py-6 border-b border-white/10">
+        <div className="font-mono text-[9px] tracking-[0.18em] uppercase text-accent mb-1">Motor de Precisión</div>
+        <h2 className="font-serif font-bold text-white leading-tight" style={{ fontSize:'clamp(1.4rem, 2.5vw, 2rem)' }}>
           ¿Cuál es el valor real de tu empresa?
         </h2>
       </div>
 
       {/* Body */}
-      <div className="p-6 md:p-8 lg:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center w-full">
+      <div className="p-6 md:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
 
-        {/* Inputs - Left Side */}
+        {/* LEFT — Inputs */}
         <div className="lg:col-span-7 flex flex-col gap-6">
+
           {/* Sector */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="font-mono text-[9px] uppercase tracking-widest text-white/40">Sector industrial</span>
-              <span className="font-mono text-[10px] text-accent font-medium">{industryMult.toFixed(1)}× base</span>
+              <span className="font-mono text-[11px] text-accent font-medium">{ind.ebitdaMult}× EBITDA base</span>
             </div>
             <div className="relative">
-              <select value={industryMult} onChange={e => setIndustryMult(Number(e.target.value))}
-                className="w-full bg-transparent border border-white/10 text-white text-[13px] py-3 px-4 outline-none focus:border-accent appearance-none cursor-pointer">
-                {INDUSTRIES.map(i => <option key={i.name} value={i.multiplier} className="bg-ink text-white">{i.name}</option>)}
+              <select value={selectedIdx} onChange={e => setSelectedIdx(Number(e.target.value))}
+                className="w-full bg-transparent border border-white/10 text-white py-3 px-4 outline-none focus:border-accent appearance-none cursor-pointer"
+                style={{ fontSize:'clamp(12px, 1.5vw, 14px)' }}>
+                {INDUSTRIES.map((ind, i) => <option key={ind.name} value={i} className="bg-[#0d0e10] text-white">{ind.name}</option>)}
               </select>
               <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 text-[10px] pointer-events-none">▼</span>
             </div>
           </div>
 
-          {/* Sliders — side by side on desktop */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <div className="flex justify-between font-mono mb-2">
-                <span className="text-white/40 uppercase tracking-widest text-[9px]">Ventas anuales (LTM)</span>
-                <span className="text-white font-medium text-[11px]">{fmtShort(revenue)}</span>
+          {/* Sliders */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {[
+              { label:'Ventas anuales (LTM)', val:revenue, setVal:setRevenue, min:500000, max:20000000, step:100000,
+                display: `USD ${fmt(revenue)}`, rangeL:'500K', rangeR:'20M' },
+              { label:'Margen EBITDA', val:margin, setVal:setMargin, min:5, max:50, step:1,
+                display:`${margin}%`, rangeL:'5%', rangeR:'50%' },
+              { label:'Crecimiento YoY', val:crecimiento, setVal:setCrecimiento, min:0, max:60, step:1,
+                display:`${crecimiento}%`, rangeL:'0%', rangeR:'60%' },
+            ].map(s => (
+              <div key={s.label} className={s.label === 'Ventas anuales (LTM)' ? 'sm:col-span-2' : ''}>
+                <div className="flex justify-between font-mono mb-2">
+                  <span className="text-white/40 uppercase tracking-widest text-[9px]">{s.label}</span>
+                  <span className="text-white font-medium text-[12px]">{s.display}</span>
+                </div>
+                <input type="range" min={s.min} max={s.max} step={s.step}
+                  value={s.val} onChange={e => s.setVal(Number(e.target.value))}
+                  className="w-full h-1 bg-white/10 rounded-full appearance-none outline-none accent-accent cursor-pointer"/>
+                <div className="flex justify-between font-mono text-[9px] text-white/20 mt-1">
+                  <span>{s.rangeL}</span><span>{s.rangeR}</span>
+                </div>
               </div>
-              <input type="range" min="500000" max="20000000" step="100000"
-                value={revenue} onChange={e => setRevenue(Number(e.target.value))}
-                className="w-full h-1 bg-white/10 rounded-full appearance-none outline-none accent-accent cursor-pointer" />
-              <div className="flex justify-between font-mono text-[9px] text-white/20 mt-1">
-                <span>USD 500K</span><span>USD 20M</span>
-              </div>
-            </div>
-
-            <div>
-              <div className="flex justify-between font-mono mb-2">
-                <span className="text-white/40 uppercase tracking-widest text-[9px]">Margen EBITDA</span>
-                <span className="text-white font-medium text-[11px]">{margin}%</span>
-              </div>
-              <input type="range" min="5" max="50" step="1"
-                value={margin} onChange={e => setMargin(Number(e.target.value))}
-                className="w-full h-1 bg-white/10 rounded-full appearance-none outline-none accent-accent cursor-pointer" />
-              <div className="flex justify-between font-mono text-[9px] text-white/20 mt-1">
-                <span>5%</span><span>50%</span>
-              </div>
-            </div>
+            ))}
           </div>
 
-          {/* Recurring toggle */}
+          {/* Recurrente toggle */}
           <button onClick={() => setIsRecurring(!isRecurring)}
             className="flex items-center justify-between p-4 border border-white/10 bg-white/5 hover:bg-white/10 transition-colors w-full text-left">
             <div>
-              <div className="text-[13px] font-medium text-white">+60% ingresos recurrentes</div>
+              <div className="text-white font-medium" style={{ fontSize:'clamp(12px,1.3vw,13px)' }}>+60% ingresos recurrentes</div>
               <div className="text-[10px] text-white/40 font-mono mt-0.5">Prima de liquidez +20% en múltiplo</div>
             </div>
             <div className={`w-10 h-5 rounded-full relative transition-colors shrink-0 ml-4 ${isRecurring ? 'bg-accent' : 'bg-white/20'}`}>
-              <div className={`absolute top-1 bg-white w-3 h-3 rounded-full transition-all ${isRecurring ? 'left-6' : 'left-1'}`} />
+              <div className={`absolute top-1 bg-white w-3 h-3 rounded-full transition-all ${isRecurring ? 'left-6' : 'left-1'}`}/>
             </div>
           </button>
+
+          {/* Metodología selector */}
+          <div>
+            <div className="font-mono text-[9px] uppercase tracking-widest text-white/30 mb-2">Metodología de valuación</div>
+            <div className="grid grid-cols-3 gap-2">
+              {(Object.keys(methods) as Array<'ebitda'|'revenue'|'dcf'>).map(m => (
+                <button key={m} onClick={() => setActiveMethod(m)}
+                  className={`py-2.5 px-3 border text-left transition-all ${activeMethod === m ? 'border-accent bg-accent/10 text-accent' : 'border-white/10 text-white/40 hover:border-white/30'}`}>
+                  <div className="font-mono text-[8px] uppercase tracking-widest mb-0.5">{m.toUpperCase()}</div>
+                  <div className="font-mono text-[11px] font-medium">{methods[m].mult}</div>
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-white/30 font-mono mt-2 leading-relaxed">{current.desc}</p>
+          </div>
         </div>
 
-        {/* Output - Right Side */}
-        <div className="border-t lg:border-t-0 lg:border-l border-white/10 pt-6 lg:pt-0 lg:pl-12 lg:col-span-5 flex flex-col justify-center gap-6">
+        {/* RIGHT — Output */}
+        <div className="lg:col-span-5 flex flex-col gap-5 border-t lg:border-t-0 lg:border-l border-white/10 pt-6 lg:pt-0 lg:pl-10">
+
+          {/* Stats */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1">
-              <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-white/40">EBITDA estimado</span>
-              <span className="font-mono text-[16px] text-white">{fmtShort(ebitda)}</span>
+            <div>
+              <div className="font-mono text-[9px] uppercase tracking-widest text-white/30 mb-1">EBITDA estimado</div>
+              <div className="font-mono font-medium text-white" style={{ fontSize:'clamp(15px,1.8vw,20px)' }}>USD {fmt(ebitda)}</div>
             </div>
-            <div className="flex flex-col gap-1">
-              <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-white/40">Múltiplo</span>
-              <span className="font-mono text-[16px] text-accent">{effectiveMultiple.toFixed(2)}<span className="text-[12px]">×</span></span>
+            <div>
+              <div className="font-mono text-[9px] uppercase tracking-widest text-white/30 mb-1">{current.label}</div>
+              <div className="font-mono font-medium text-accent" style={{ fontSize:'clamp(15px,1.8vw,20px)' }}>{current.mult}</div>
             </div>
           </div>
 
-          {/* Result box - Premium treatment */}
-          <div className="border border-white/10 bg-gradient-to-b from-white/[0.03] to-transparent p-6 md:p-8 text-center shadow-2xl">
-            <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-accent mb-4">
-              Rango de Valoración (USD)
+          {/* Rango activo */}
+          <div className="border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-6 text-center">
+            <div className="font-mono text-[8px] uppercase tracking-[0.2em] text-accent mb-4">
+              Rango de Valoración — {current.label}
             </div>
-            
-            <div className="flex items-center justify-center gap-3 sm:gap-4">
-              <span className="font-serif text-[26px] sm:text-[32px] lg:text-[40px] font-bold text-white shrink-0 tracking-tight">
-                {fmtUSD(valMin).replace('USD ', '')}
+            <div className="flex items-center justify-center gap-3">
+              <span className="font-serif font-bold text-white tracking-tight" style={{ fontSize:'clamp(1.6rem,3.5vw,2.8rem)' }}>
+                {fmt(current.min)}
               </span>
-              <span className="w-4 sm:w-8 h-[1px] bg-white/20 shrink-0"></span>
-              <span className="font-serif text-[26px] sm:text-[32px] lg:text-[40px] font-bold text-white shrink-0 tracking-tight">
-                {fmtUSD(valMax).replace('USD ', '')}
+              <span className="w-6 h-px bg-white/20 shrink-0"/>
+              <span className="font-serif font-bold text-white tracking-tight" style={{ fontSize:'clamp(1.6rem,3.5vw,2.8rem)' }}>
+                {fmt(current.max)}
               </span>
             </div>
-            
-            <div className="font-mono text-[9px] text-white/40 mt-6 md:mt-8 uppercase tracking-[0.15em]">
-              No constituye oferta vinculante
+            <div className="font-mono text-[8px] text-white/30 mt-4 uppercase tracking-widest">No constituye oferta vinculante</div>
+          </div>
+
+          {/* Consenso de los 3 métodos */}
+          <div className="border border-accent/20 bg-accent/5 p-4">
+            <div className="font-mono text-[9px] uppercase tracking-widest text-accent mb-3">
+              Consenso — 3 metodologías
+            </div>
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-serif font-bold text-white" style={{ fontSize:'clamp(1.1rem,2vw,1.5rem)' }}>
+                {fmtFull(consensoMin)}
+              </span>
+              <span className="text-white/30 text-[12px]">—</span>
+              <span className="font-serif font-bold text-white" style={{ fontSize:'clamp(1.1rem,2vw,1.5rem)' }}>
+                {fmtFull(consensoMax)}
+              </span>
+            </div>
+            <div className="flex gap-2 text-[9px] font-mono text-white/30">
+              {Object.entries(methods).map(([k, v]) => (
+                <div key={k} className="flex-1 text-center">
+                  <div className="text-white/50 mb-0.5">{k.toUpperCase()}</div>
+                  <div>{fmt(v.min)}–{fmt(v.max)}</div>
+                </div>
+              ))}
             </div>
           </div>
 
           <button onClick={() => setSellerWizardOpen(true)}
-            className="w-full mt-2 font-sans text-[11px] md:text-[12px] font-medium tracking-[0.15em] uppercase bg-white text-ink py-4 hover:bg-paper-mid transition-colors duration-200">
-            Listar mi empresa y auditar valor {'>'}
+            className="w-full font-mono text-[10px] md:text-[11px] font-medium tracking-[0.15em] uppercase bg-white text-ink py-4 hover:bg-accent hover:text-white transition-colors duration-200">
+            Listar mi empresa y auditar valor →
           </button>
         </div>
       </div>
