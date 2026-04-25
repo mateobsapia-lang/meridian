@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { Modal } from '../components/Modal';
 import { useAppContext } from '../AppContext';
-import { createNotification } from '../lib/firestore';
+import { saveDealAIScore, notifyAdmins } from '../lib/firestore';
 
 type AnalysisResult = {
   score: number;
@@ -15,14 +15,18 @@ type AnalysisResult = {
   reason?: string;
 };
 
-export function AIAnalysisModal({ isOpen, onClose, onApprove }: {
+interface AIAnalysisModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onApprove: (data: Partial<AnalysisResult>) => void;
-}) {
-  const { user, showToast } = useAppContext();
+  onApprove: (data: { revenue?: number; ebitda?: number }) => void;
+  dealId?: string;
+}
+
+export function AIAnalysisModal({ isOpen, onClose, onApprove, dealId }: AIAnalysisModalProps) {
+  const { showToast } = useAppContext();
   const [file, setFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -31,12 +35,12 @@ export function AIAnalysisModal({ isOpen, onClose, onApprove }: {
     if (f) setFile(f);
   };
 
-  const toBase64 = (file: File): Promise<string> =>
+  const toBase64 = (f: File): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve((reader.result as string).split(',')[1]);
       reader.onerror = reject;
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(f);
     });
 
   const analyze = async () => {
@@ -48,31 +52,38 @@ export function AIAnalysisModal({ isOpen, onClose, onApprove }: {
       const base64 = await toBase64(file);
       const isPDF = file.type === 'application/pdf';
 
-      const prompt = `Sos un analista senior de M&A especializado en PyMEs argentinas. 
-Analizá el documento adjunto (puede ser un balance, estado de resultados, o información financiera de una empresa).
+      const prompt = `Sos un analista senior de M&A especializado en PyMEs argentinas.
+Analizá el documento adjunto (balance, estado de resultados o información financiera de una empresa).
 
-Extraé y analizá:
-1. Revenue/Ventas totales (último período disponible, en USD o ARS)
+Extraé y evaluá:
+1. Revenue/Ventas totales (último período, en USD o ARS)
 2. EBITDA o resultado operativo
 3. Tendencia de crecimiento
 4. Deudas o pasivos significativos
 5. Fortalezas del negocio
 6. Riesgos o alertas
 
-Respondé SOLO en JSON válido con esta estructura exacta:
-{
-  "score": número del 0 al 100,
-  "revenue": número en USD (null si no podés determinarlo),
-  "ebitda": número en USD (null si no podés determinarlo),
-  "summary": "resumen ejecutivo de 2-3 oraciones",
-  "strengths": ["fortaleza 1", "fortaleza 2"],
-  "concerns": ["preocupación 1", "preocupación 2"],
-  "recommendation": "approve" | "review" | "reject",
-  "needsManualReview": boolean,
-  "reason": "razón si needsManualReview es true"
-}
+Criterios de scoring 0-100:
+- Penalizá: deuda oculta o desproporcionada, inconsistencias numéricas, margen EBITDA atípico (<5% o >60%), docs incompletos o ilegibles
+- Bonificá: crecimiento sostenido, margen saludable, documentación completa, diversificación de clientes
 
-Si el documento no tiene información financiera suficiente, poné needsManualReview: true.`;
+Reglas de recomendación:
+- score ≥ 80 → "approve" (auto-publicar en mercado)
+- score 50-79 → "review" (revisión manual por el equipo)
+- score < 50 → "reject" (pedir más documentación)
+
+Respondé SOLO con JSON válido, sin markdown ni backticks:
+{
+  "score": <0-100>,
+  "revenue": <número en USD o null>,
+  "ebitda": <número en USD o null>,
+  "summary": "<resumen ejecutivo 2-3 oraciones>",
+  "strengths": ["<fortaleza 1>", "<fortaleza 2>"],
+  "concerns": ["<preocupación 1>", "<preocupación 2>"],
+  "recommendation": "<approve|review|reject>",
+  "needsManualReview": <true|false>,
+  "reason": "<razón opcional>"
+}`;
 
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -83,66 +94,91 @@ Si el documento no tiene información financiera suficiente, poné needsManualRe
           messages: [{
             role: 'user',
             content: [
-              ...(isPDF ? [{
-                type: 'document',
-                source: { type: 'base64', media_type: 'application/pdf', data: base64 }
-              }] : [{
-                type: 'image',
-                source: { type: 'base64', media_type: file.type, data: base64 }
-              }]),
-              { type: 'text', text: prompt }
-            ]
-          }]
-        })
+              ...(isPDF
+                ? [{ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } }]
+                : [{ type: 'image', source: { type: 'base64', media_type: file.type, data: base64 } }]
+              ),
+              { type: 'text', text: prompt },
+            ],
+          }],
+        }),
       });
 
       const data = await response.json();
-      const text = data.content?.[0]?.text ?? '';
-      const clean = text.replace(/```json|```/g, '').trim();
-      const parsed: AnalysisResult = JSON.parse(clean);
+      const text: string = data.content?.[0]?.text ?? '';
+      const parsed: AnalysisResult = JSON.parse(text.trim());
       setResult(parsed);
-
-      // Si necesita revisión manual, notificar al admin
-      if (parsed.needsManualReview && user) {
-        // En producción esto debería ir a una colección de admin reviews
-        await createNotification(
-          'ADMIN_UID', // Reemplazar con UID real del admin
-          'nda_request',
-          '⚠ Revisión manual requerida',
-          `Un vendedor subió documentos que requieren revisión manual: ${file.name}`,
-        );
-        showToast('Enviado a revisión manual — te contactaremos en 48hs');
-      }
-
-    } catch (err) {
-      // Si falla la IA, pedir revisión manual
+    } catch {
       setResult({
-        score: 0,
-        revenue: null,
-        ebitda: null,
+        score: 0, revenue: null, ebitda: null,
         summary: 'No se pudo analizar el documento automáticamente.',
-        strengths: [],
-        concerns: [],
+        strengths: [], concerns: [],
         recommendation: 'review',
         needsManualReview: true,
-        reason: 'Error en el análisis automático — revisión manual requerida'
+        reason: 'Error en el análisis automático — revisión manual requerida.',
       });
     } finally {
       setAnalyzing(false);
     }
   };
 
-  const SCORE_COLOR = (s: number) => s >= 70 ? 'text-[#4ade80]' : s >= 40 ? 'text-amber-400' : 'text-red-400';
-  const REC_LABEL = { approve: '✅ Apto para publicar', review: '⚠ Requiere revisión', reject: '❌ No apto' };
+  const handleContinue = async () => {
+    if (!result) return;
+    setSaving(true);
+    try {
+      // Persistir score en Firestore si tenemos dealId
+      if (dealId) {
+        await saveDealAIScore(
+          dealId,
+          result.score,
+          result.recommendation,
+          result.summary,
+          result.strengths,
+          result.concerns,
+        );
+      }
+
+      // Notificar admins dinámicamente (sin ADMIN_UID hardcodeado)
+      if (result.needsManualReview || result.recommendation === 'review') {
+        await notifyAdmins(
+          'nda_request',
+          '⚠ Revisión manual requerida',
+          `Deal${dealId ? ` ${dealId}` : ''} · Score IA: ${result.score}/100 · ${result.reason ?? 'Requiere revisión manual'}`,
+          dealId,
+        );
+        showToast('Enviado a revisión — te contactaremos en 24-48hs hábiles');
+      } else if (result.score >= 80) {
+        showToast('✅ Score excelente — tu empresa fue publicada automáticamente');
+      } else if (result.score < 50) {
+        showToast('Documentación insuficiente. Por favor subí información financiera más completa.');
+      }
+
+      onApprove({ revenue: result.revenue ?? undefined, ebitda: result.ebitda ?? undefined });
+    } catch {
+      showToast('Error al guardar el análisis. Intentá de nuevo.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const scoreColor = (s: number) =>
+    s >= 80 ? 'text-[#4ade80]' : s >= 50 ? 'text-amber-400' : 'text-red-400';
+
+  const recLabel: Record<string, string> = {
+    approve: '✅ Apto para publicar',
+    review:  '⚠ Requiere revisión manual',
+    reject:  '❌ Documentación insuficiente',
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Análisis de Documentos con IA">
       <div className="flex flex-col gap-6">
         <div className="bg-accent-light border border-accent/20 p-4 text-[12px] text-accent">
-          📄 Subí el balance o estado de resultados de tu empresa. Nuestra IA lo analizará en segundos y generará un score de calidad para agilizar la publicación.
+          📄 Subí el balance o estado de resultados de tu empresa. Nuestra IA lo analizará y asignará
+          un score 0-100. Score ≥ 80 publica automáticamente, 50-79 va a revisión, &lt;50 pide más documentos.
         </div>
 
-        {/* Upload area */}
+        {/* Upload */}
         <div
           onClick={() => fileRef.current?.click()}
           className="border-2 border-dashed border-border-strong hover:border-accent transition-colors p-8 text-center cursor-pointer"
@@ -151,9 +187,13 @@ Si el documento no tiene información financiera suficiente, poné needsManualRe
           <div className="font-medium text-ink text-[14px]">
             {file ? file.name : 'Click para subir documento'}
           </div>
-          <div className="text-[11px] text-ink-mute mt-1">PDF, imagen · Balance, estado de resultados, flujo de caja</div>
-          <input ref={fileRef} type="file" className="hidden" onChange={handleFile}
-            accept=".pdf,image/*" />
+          <div className="text-[11px] text-ink-mute mt-1">
+            PDF o imagen · Balance, estado de resultados, flujo de caja
+          </div>
+          <input
+            ref={fileRef} type="file" className="hidden"
+            onChange={handleFile} accept=".pdf,image/*"
+          />
         </div>
 
         {file && !result && (
@@ -167,29 +207,33 @@ Si el documento no tiene información financiera suficiente, poné needsManualRe
           </button>
         )}
 
-        {/* Result */}
+        {/* Resultado */}
         {result && (
           <div className="flex flex-col gap-4">
             <div className="border border-border-strong bg-paper-deep p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-1">Score de calidad</div>
-                  <div className={`font-serif text-[48px] font-bold ${SCORE_COLOR(result.score)}`}>{result.score}</div>
+                  <div className={`font-serif text-[48px] font-bold ${scoreColor(result.score)}`}>{result.score}</div>
                 </div>
                 <div className="text-right">
                   <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-1">Recomendación</div>
-                  <div className="font-medium text-[13px] text-ink">{REC_LABEL[result.recommendation]}</div>
+                  <div className="font-medium text-[13px] text-ink">{recLabel[result.recommendation]}</div>
                 </div>
               </div>
-              <p className="text-[13px] text-ink-soft leading-relaxed border-t border-border-subtle pt-4">{result.summary}</p>
+              <p className="text-[13px] text-ink-soft leading-relaxed border-t border-border-subtle pt-4">
+                {result.summary}
+              </p>
             </div>
 
-            {result.revenue && (
+            {(result.revenue || result.ebitda) && (
               <div className="grid grid-cols-2 gap-3 text-[12px]">
-                <div className="border border-border-subtle p-3">
-                  <div className="font-mono text-[9px] text-ink-mute uppercase tracking-widest mb-1">Revenue detectado</div>
-                  <div className="font-mono font-medium text-ink">USD {(result.revenue / 1000).toFixed(0)}K</div>
-                </div>
+                {result.revenue && (
+                  <div className="border border-border-subtle p-3">
+                    <div className="font-mono text-[9px] text-ink-mute uppercase tracking-widest mb-1">Revenue detectado</div>
+                    <div className="font-mono font-medium text-ink">USD {(result.revenue / 1000).toFixed(0)}K</div>
+                  </div>
+                )}
                 {result.ebitda && (
                   <div className="border border-border-subtle p-3">
                     <div className="font-mono text-[9px] text-ink-mute uppercase tracking-widest mb-1">EBITDA detectado</div>
@@ -221,19 +265,32 @@ Si el documento no tiene información financiera suficiente, poné needsManualRe
               </div>
             )}
 
-            {result.needsManualReview ? (
+            {result.needsManualReview && (
               <div className="bg-amber-50 border border-amber-300 p-4 text-[12px] text-amber-800">
-                <strong>Revisión manual requerida.</strong> {result.reason ?? 'Nuestro equipo revisará tu documentación y te contactará en 24-48hs hábiles.'}
+                <strong>Revisión manual requerida.</strong>{' '}
+                {result.reason ?? 'Nuestro equipo revisará tu documentación y te contactará en 24-48hs hábiles.'}
+              </div>
+            )}
+
+            {result.score < 50 ? (
+              <div className="border border-red-200 bg-red-50 p-4 text-[12px] text-red-700">
+                Score insuficiente ({result.score}/100). Por favor subí documentación financiera más completa.
               </div>
             ) : (
-              <button onClick={() => onApprove({ revenue: result.revenue ?? undefined, ebitda: result.ebitda ?? undefined })}
-                className="btn-primary w-full">
-                Continuar con estos datos →
+              <button onClick={handleContinue} disabled={saving} className="btn-primary w-full">
+                {saving ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Guardando...
+                  </span>
+                ) : result.needsManualReview ? 'Enviar a revisión →' : 'Continuar con estos datos →'}
               </button>
             )}
 
-            <button onClick={() => { setResult(null); setFile(null); }}
-              className="text-[11px] font-mono text-ink-mute hover:text-ink text-center">
+            <button
+              onClick={() => { setResult(null); setFile(null); }}
+              className="text-[11px] font-mono text-ink-mute hover:text-ink text-center"
+            >
               Subir otro documento
             </button>
           </div>

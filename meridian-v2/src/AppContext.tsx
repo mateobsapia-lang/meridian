@@ -10,33 +10,23 @@ type AppContextType = {
   loading: boolean;
   login: (user: AppUser) => void;
   logout: () => void;
-
   // Modals
-  isLoginModalOpen: boolean;
-  setLoginModalOpen: (open: boolean) => void;
-  isSellerWizardOpen: boolean;
-  setSellerWizardOpen: (open: boolean) => void;
-  isBuyerWizardOpen: boolean;
-  setBuyerWizardOpen: (open: boolean) => void;
-  isProfileModalOpen: boolean;
-  setProfileModalOpen: (open: boolean) => void;
-  isNdaModalOpen: boolean;
-  setNdaModalOpen: (open: boolean) => void;
-  selectedDealId: string | null;
-  openNdaModal: (dealId: string) => void;
-  isContactModalOpen: boolean;
-  setContactModalOpen: (open: boolean) => void;
-  isLeadModalOpen: boolean;
-  setLeadModalOpen: (open: boolean) => void;
-
+  isLoginModalOpen: boolean; setLoginModalOpen: (o:boolean)=>void;
+  isSellerWizardOpen: boolean; setSellerWizardOpen: (o:boolean)=>void;
+  isBuyerWizardOpen: boolean; setBuyerWizardOpen: (o:boolean)=>void;
+  isProfileModalOpen: boolean; setProfileModalOpen: (o:boolean)=>void;
+  isNdaModalOpen: boolean; setNdaModalOpen: (o:boolean)=>void;
+  selectedDealId: string | null; openNdaModal: (id:string)=>void;
+  isContactModalOpen: boolean; setContactModalOpen: (o:boolean)=>void;
+  isLeadModalOpen: boolean; setLeadModalOpen: (o:boolean)=>void;
+  // Lead magnets
+  isDiagnosticoOpen: boolean; setDiagnosticoOpen: (o:boolean)=>void;
+  isReporteOpen: boolean; setReporteOpen: (o:boolean)=>void;
+  isSimuladorOpen: boolean; setSimuladorOpen: (o:boolean)=>void;
   // Notifications
-  notifications: Notification[];
-  unreadCount: number;
-  markRead: (id: string) => void;
-
+  notifications: Notification[]; unreadCount: number; markRead: (id:string)=>void;
   // Toast
-  toastMessage: string | null;
-  showToast: (msg: string) => void;
+  toastMessage: string | null; showToast: (msg:string)=>void;
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -52,38 +42,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isNdaModalOpen, setNdaModalOpen] = useState(false);
   const [isContactModalOpen, setContactModalOpen] = useState(false);
   const [isLeadModalOpen, setLeadModalOpen] = useState(false);
+  const [isDiagnosticoOpen, setDiagnosticoOpen] = useState(false);
+  const [isReporteOpen, setReporteOpen] = useState(false);
+  const [isSimuladorOpen, setSimuladorOpen] = useState(false);
   const [selectedDealId, setSelectedDealId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Auth listener
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const userRef = doc(db, 'users', firebaseUser.uid);
-        const userSnap = await getDoc(userRef);
-        const name = firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Usuario';
-        const initials = name.slice(0, 2).toUpperCase();
+    const unsub = onAuthStateChanged(auth, async (fb) => {
+      if (fb) {
+        const ref = doc(db,'users',fb.uid);
+        const snap = await getDoc(ref);
+        const name = fb.displayName || fb.email?.split('@')[0] || 'Usuario';
+        const initials = name.slice(0,2).toUpperCase();
         let role: AppUser['role'] = 'seller';
         let buyerProfile = undefined;
-
-        if (userSnap.exists()) {
-          const data = userSnap.data();
-          role = data.role ?? 'seller';
-          buyerProfile = data.buyerProfile;
+        if (snap.exists()) {
+          const d = snap.data();
+          role = d.role ?? 'seller';
+          buyerProfile = d.buyerProfile;
         } else {
-          await setDoc(userRef, { email: firebaseUser.email, role: 'seller', createdAt: new Date() });
+          await setDoc(ref, { email: fb.email, role:'seller', createdAt: new Date() });
         }
-
-        setUser({ uid: firebaseUser.uid, name, initials, email: firebaseUser.email || '', role, buyerProfile });
-      } else {
-        setUser(null);
-      }
+        setUser({ uid:fb.uid, name, initials, email:fb.email||'', role, buyerProfile });
+      } else { setUser(null); }
       setLoading(false);
     });
-    return unsubscribe;
+    return unsub;
   }, []);
 
-  // Notifications subscription
   useEffect(() => {
     if (!user) { setNotifications([]); return; }
     const unsub = subscribeToNotifications(user.uid, setNotifications);
@@ -91,35 +78,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [user?.uid]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
-
-  const markRead = async (id: string) => {
-    const { markNotificationRead } = await import('./lib/firestore');
-    await markNotificationRead(id);
-  };
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
-  };
-
-  const login = (newUser: AppUser) => {
-    setUser(newUser);
-    setLoginModalOpen(false);
-    showToast(`Bienvenido, ${newUser.name}`);
-  };
-
-  const logout = async () => {
-    await signOut(auth);
-    setUser(null);
-    setProfileModalOpen(false);
-    showToast('Sesión cerrada');
-  };
-
-  const openNdaModal = (dealId: string) => {
-    if (!user) { setLoginModalOpen(true); return; }
-    setSelectedDealId(dealId);
-    setNdaModalOpen(true);
-  };
+  const markRead = async (id:string) => { const { markNotificationRead } = await import('./lib/firestore'); await markNotificationRead(id); };
+  const showToast = (msg:string) => { setToastMessage(msg); setTimeout(()=>setToastMessage(null), 3500); };
+  const login = (u:AppUser) => { setUser(u); setLoginModalOpen(false); showToast(`Bienvenido, ${u.name}`); };
+  const logout = async () => { await signOut(auth); setUser(null); setProfileModalOpen(false); showToast('Sesión cerrada'); };
+  const openNdaModal = (id:string) => { if (!user) { setLoginModalOpen(true); return; } setSelectedDealId(id); setNdaModalOpen(true); };
 
   return (
     <AppContext.Provider value={{
@@ -131,6 +94,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       isNdaModalOpen, setNdaModalOpen,
       isContactModalOpen, setContactModalOpen,
       isLeadModalOpen, setLeadModalOpen,
+      isDiagnosticoOpen, setDiagnosticoOpen,
+      isReporteOpen, setReporteOpen,
+      isSimuladorOpen, setSimuladorOpen,
       selectedDealId, openNdaModal,
       notifications, unreadCount, markRead,
       toastMessage, showToast,

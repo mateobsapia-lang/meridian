@@ -19,6 +19,9 @@ import { ProfileModal } from './modals/ProfileModal';
 import { ContactModal } from './modals/ContactModal';
 import { LeadCaptureModal } from './modals/LeadCaptureModal';
 import { WelcomeModal } from './modals/WelcomeModal';
+import { DiagnosticoModal } from './modals/DiagnosticoModal';
+import { ReporteValuacionModal } from './modals/ReporteValuacionModal';
+import { SimuladorOfertaModal } from './modals/SimuladorOfertaModal';
 
 export default function App() {
   return (
@@ -47,6 +50,9 @@ export default function App() {
           <ProfileModal />
           <ContactModal />
           <LeadCaptureModal />
+          <DiagnosticoModal />
+          <ReporteValuacionModal />
+          <SimuladorOfertaModal />
           <Toast />
         </div>
       </BrowserRouter>
