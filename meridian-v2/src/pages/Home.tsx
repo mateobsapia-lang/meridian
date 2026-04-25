@@ -48,13 +48,13 @@ export function Home() {
                 <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                 <span className="font-mono text-[9px] tracking-[0.14em] uppercase text-accent">Edición de portada · ARG · {new Date().getFullYear()}</span>
               </div>
-              <h1 className="font-serif text-[44px] sm:text-[56px] md:text-[68px] font-bold leading-[0.95] tracking-[-0.025em] text-ink mb-7">
+              <h1 className="font-serif text-[36px] sm:text-[48px] md:text-[68px] font-bold leading-[0.95] tracking-[-0.025em] text-ink mb-7">
                 El mercado discreto donde se <em className="italic text-accent">transmiten</em> las empresas.
               </h1>
-              <p className="text-[17px] text-ink-soft leading-[1.65] max-w-[520px] font-light mb-9">
+              <p className="text-[15px] sm:text-[17px] text-ink-soft leading-[1.65] max-w-[520px] font-light mb-7">
                 El 80% de las PyMEs argentinas se venden por debajo de su valor real. No porque el mercado no pague — porque el dueño no supo cómo salir.
               </p>
-              <div className="flex flex-wrap gap-3 mt-4">
+              <div className="flex flex-col sm:flex-row gap-3 mt-4">
                 <motion.div whileHover={{ scale:1.02 }} whileTap={{ scale:0.97 }}>
                   <button onClick={() => setSellerWizardOpen(true)} className="btn-primary shadow-lg shadow-ink/10 !py-4 !px-7">
                     Quiero vender mi empresa →
@@ -64,7 +64,7 @@ export function Home() {
                   <Link to="/mercado" className="btn-ghost !py-4 !px-7">Ver el mercado</Link>
                 </motion.div>
               </div>
-              <div className="flex items-center gap-6 mt-8 pt-6 border-t border-border-subtle">
+              <div className="flex items-center gap-4 sm:gap-6 mt-6 sm:mt-8 pt-5 sm:pt-6 border-t border-border-subtle">
                 {[['5%','Solo al cierre'],['90 días','Tiempo promedio'],['4.2×','EBITDA promedio']].map(([v,l]) => (
                   <div key={l}>
                     <div className="font-serif text-[22px] font-bold text-ink">{v}</div>
@@ -108,7 +108,7 @@ export function Home() {
             <div className="font-mono text-[9px] tracking-[0.14em] uppercase text-accent mb-2">Sin intermediarios innecesarios</div>
             <h2 className="font-serif text-[28px] md:text-[36px] font-bold text-ink tracking-[-0.02em]">De la decisión al cierre, sin perder el control</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-border-strong border border-border-strong">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-border-strong border border-border-strong overflow-hidden">
             {HOW_IT_WORKS.map((s,i) => (
               <motion.div key={i} initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }}
                 transition={{ delay:i*0.1 }} viewport={{ once:true }}
@@ -137,7 +137,7 @@ export function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-border-strong border border-border-strong mt-12 shadow-xl">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-px md:bg-border-strong md:border md:border-border-strong mt-10 md:mt-12 md:shadow-xl">
 
             {/* 1 — DIAGNÓSTICO DE VENDIBILIDAD */}
             <motion.div initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }}
@@ -306,7 +306,7 @@ export function Home() {
             <div className="bg-white/5 border border-white/10 p-8 mb-6">
               <div className="font-serif text-[56px] font-bold text-accent mb-2">5%</div>
               <div className="font-mono text-[12px] text-white/60 mb-6">del precio de cierre · Solo si la operación se concreta</div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4">
                 {[['Empresa de USD 2M','USD 100K'],['Empresa de USD 5M','USD 250K'],['Empresa de USD 10M','USD 500K']].map(([l,v])=>(
                   <div key={l} className="bg-white/5 p-4">
                     <div className="font-mono text-[10px] text-white/40 mb-1">{l}</div>
@@ -340,7 +340,7 @@ export function Home() {
       {/* SOCIAL PROOF / INFORME TRIMESTRAL */}
       <section className="py-16 bg-paper-deep border-t border-border-strong">
         <div className="container-custom">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-border-strong border border-border-strong">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-px md:bg-border-strong md:border md:border-border-strong">
             {/* Informe trimestral CTA */}
             <div className="bg-paper p-10 flex flex-col gap-5">
               <div className="font-mono text-[9px] uppercase tracking-widest text-accent mb-1">Informe trimestral</div>
@@ -392,7 +392,7 @@ export function Home() {
       {/* CTA FINAL */}
       <section className="py-20 bg-paper border-t border-border-strong">
         <div className="container-custom text-center">
-          <h2 className="font-serif text-[32px] md:text-[48px] font-bold leading-tight tracking-[-0.02em] text-ink mb-4">
+          <h2 className="font-serif text-[26px] sm:text-[32px] md:text-[48px] font-bold leading-tight tracking-[-0.02em] text-ink mb-4">
             Cada mes que esperás, tu empresa vale lo mismo. Tu ventana de salida, no.
           </h2>
           <p className="text-ink-mute text-[15px] mb-10 max-w-lg mx-auto">Sin costos anticipados. Sin compromisos. Solo resultados.</p>

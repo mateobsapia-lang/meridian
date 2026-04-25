@@ -459,8 +459,8 @@ function AdminDashboard() {
         {loading ? (
           <div className="py-12 text-center font-mono text-[11px] text-ink-mute animate-pulse">CARGANDO...</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-[12px] min-w-[900px]">
+          <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+            <table className="w-full text-[12px] min-w-[700px]">
               <thead>
                 <tr className="border-b border-border-strong">
                   {['ID', 'Empresa', 'Industria', 'Asking', 'Score IA', 'Estado', 'Views', 'NDAs', 'Acciones'].map(h => (

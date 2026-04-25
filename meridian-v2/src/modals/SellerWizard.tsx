@@ -153,7 +153,7 @@ export function SellerWizard() {
               <input name="nombreFantasia" value={form.nombreFantasia} onChange={handle}
                 className={inputClass} placeholder="Ej: Soluciones del Sur" required />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>Industria</label>
                 <select name="industria" value={form.industria} onChange={handle} className={inputClass}>
@@ -228,7 +228,7 @@ export function SellerWizard() {
         {step === 3 && (
           <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col gap-4">
             <p className="text-[12px] text-ink-mute font-mono">Todos los valores en USD miles (ej: 2500 = USD 2.5M)</p>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
                 { name: 'revenue', label: 'Revenue anual (USD miles)' },
                 { name: 'ebitda', label: 'EBITDA (USD miles)' },
@@ -257,7 +257,7 @@ export function SellerWizard() {
         {/* Paso 4 — Legal */}
         {step === 4 && (
           <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col gap-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>Tipo Societario</label>
                 <select name="tipoSocietario" value={form.tipoSocietario} onChange={handle} className={inputClass}>

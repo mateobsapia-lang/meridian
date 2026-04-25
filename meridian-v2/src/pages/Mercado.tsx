@@ -115,7 +115,7 @@ export function Mercado() {
             <div className="text-ink-mute text-sm">No hay deals publicados en esta categoría aún.</div>
           </div>
         ) : (
-          <table className="w-full border-collapse border border-border-strong min-w-[1000px] bg-paper">
+          <div className="overflow-x-auto -mx-4 sm:mx-0"><table className="w-full border-collapse border border-border-strong min-w-[700px] sm:min-w-[1000px] bg-paper">
             <thead>
               <tr>
                 {['ID Deal','Industria','Región','Revenue','EBITDA','Margen','Crec.','Múltiplo','Asking','Match','Estado',''].map(h => (
@@ -164,7 +164,7 @@ export function Mercado() {
                 );
               })}
             </tbody>
-          </table>
+          </table></div>
         )}
       </div>
     </div>

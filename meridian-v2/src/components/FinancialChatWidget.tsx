@@ -201,7 +201,7 @@ export function FinancialChatWidget() {
       {/* BURBUJA */}
       <button
         onClick={() => setOpen(!open)}
-        className="fixed bottom-6 right-6 z-50 shadow-2xl transition-all duration-300 group"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 shadow-2xl transition-all duration-300 group"
         aria-label="Asistente financiero"
         style={{ background: 'none', border: 'none', padding: 0 }}
       >
@@ -219,7 +219,7 @@ export function FinancialChatWidget() {
               </svg>
             </div>
             <div className="text-left">
-              <div className="text-white font-medium text-[12px] leading-tight">Analizá tu empresa</div>
+              <div className="text-white font-medium text-[11px] sm:text-[12px] leading-tight">Analizá tu empresa</div>
               <div className="text-white/50 font-mono text-[9px] tracking-wide">IA financiera · gratis</div>
             </div>
             <div className="w-2 h-2 bg-accent ml-1 shrink-0 animate-pulse" style={{ borderRadius: '50%' }} />
@@ -229,8 +229,26 @@ export function FinancialChatWidget() {
 
       {/* PANEL */}
       {open && (
-        <div className="fixed bottom-24 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] bg-paper border border-border-strong shadow-2xl flex flex-col"
-          style={{ height: '520px' }}>
+        <div className="fixed z-50 bg-paper border border-border-strong shadow-2xl flex flex-col"
+          style={{
+            bottom: 0, right: 0, left: 0, height: '100dvh',
+            borderRadius: 0,
+          }}
+          // Desktop override via media query via className
+          {...({} as any)}
+          // usamos una clase especial para desktop
+          data-chat-panel="true"
+        >
+        <style>{`[data-chat-panel] { 
+          bottom: 6rem !important; right: 1.5rem !important; left: auto !important;
+          width: 380px; height: 520px; border-radius: 0;
+        }
+        @media (max-width: 640px) {
+          [data-chat-panel] {
+            bottom: 0 !important; right: 0 !important; left: 0 !important;
+            width: 100% !important; height: 100dvh !important;
+          }
+        }`}</style>
 
           {/* Header */}
           <div className="bg-ink text-white px-5 py-4 flex items-center justify-between shrink-0">

@@ -101,7 +101,7 @@ export function BuyerWizard() {
       {step === 1 && (
         <form onSubmit={e=>{e.preventDefault();setStep(2);}} className="flex flex-col gap-4">
           <h3 className="font-serif text-[18px] font-medium text-ink mb-1">1. Tu perfil institucional</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {!user && <>
               <div>
                 <label className={lc}>Nombre completo</label>

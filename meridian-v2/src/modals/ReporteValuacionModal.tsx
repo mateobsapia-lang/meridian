@@ -117,7 +117,7 @@ Tono institucional, preciso. Sin títulos ni bullets.`,
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <div className="flex justify-between font-mono text-[9px] mb-1.5">
                 <span className="uppercase tracking-widest text-ink-mute">Revenue anual</span>
@@ -210,7 +210,7 @@ Tono institucional, preciso. Sin títulos ni bullets.`,
           {/* Valuación principal */}
           <div className="border border-border-strong p-5">
             <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-3">Rango de Valuación</div>
-            <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="grid grid-cols-3 gap-2 text-center">
               <div className="border border-border-subtle p-3">
                 <div className="font-mono text-[9px] text-ink-mute mb-1">Conservador</div>
                 <div className="font-serif text-[20px] font-bold text-ink">{fmt(valMin)}</div>
