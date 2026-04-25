@@ -201,20 +201,29 @@ export function FinancialChatWidget() {
       {/* BURBUJA */}
       <button
         onClick={() => setOpen(!open)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-ink text-white shadow-2xl flex items-center justify-center hover:bg-accent transition-all duration-300 group"
+        className="fixed bottom-6 right-6 z-50 shadow-2xl transition-all duration-300 group"
         aria-label="Asistente financiero"
+        style={{ background: 'none', border: 'none', padding: 0 }}
       >
         {open ? (
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-            <path d="M2 2L16 16M16 2L2 16" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
+          <div className="w-12 h-12 bg-ink flex items-center justify-center hover:bg-accent transition-colors duration-200">
+            <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+              <path d="M2 2L16 16M16 2L2 16" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </div>
         ) : (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="white"/>
-          </svg>
-        )}
-        {!open && messages.length === 0 && (
-          <span className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full animate-pulse" />
+          <div className="flex items-center gap-3 bg-ink pl-3 pr-4 py-2.5 hover:bg-accent transition-colors duration-200" style={{ borderRadius: '100px' }}>
+            <div className="w-8 h-8 bg-accent flex items-center justify-center shrink-0" style={{ borderRadius: '50%' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M3 17l4-8 4 4 4-6 4 10" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div className="text-left">
+              <div className="text-white font-medium text-[12px] leading-tight">Analizá tu empresa</div>
+              <div className="text-white/50 font-mono text-[9px] tracking-wide">IA financiera · gratis</div>
+            </div>
+            <div className="w-2 h-2 bg-accent ml-1 shrink-0 animate-pulse" style={{ borderRadius: '50%' }} />
+          </div>
         )}
       </button>
 
@@ -247,8 +256,22 @@ export function FinancialChatWidget() {
                   Subí tu balance o hacé una pregunta sobre el valor de tu empresa. Análisis confidencial, sin compromiso.
                 </p>
                 {showQuick && (
-                  <div className="flex flex-col gap-1.5 mt-1">
-                    <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mb-1">Preguntas frecuentes</div>
+                  <div className="flex flex-col gap-2 mt-1">
+                    <button
+                      onClick={() => fileRef.current?.click()}
+                      className="flex items-center gap-3 border-2 border-dashed border-border-strong hover:border-accent hover:bg-accent-light transition-all p-4 text-left w-full group"
+                    >
+                      <div className="w-10 h-10 bg-paper-deep border border-border-strong flex items-center justify-center shrink-0 group-hover:border-accent group-hover:bg-accent-light transition-all">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ink-mute group-hover:text-accent">
+                          <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="text-[12px] font-medium text-ink">Subir balance o estado de resultados</div>
+                        <div className="text-[10px] text-ink-mute font-mono mt-0.5">PDF o imagen · La IA lo analiza en segundos</div>
+                      </div>
+                    </button>
+                    <div className="font-mono text-[9px] uppercase tracking-widest text-ink-mute mt-1 mb-0.5">O preguntá directamente</div>
                     {QUICK_QUESTIONS.map(q => (
                       <button key={q} onClick={() => sendMessage(q)}
                         className="text-left text-[11px] text-ink-soft border border-border-subtle px-3 py-2 hover:border-accent hover:text-ink hover:bg-accent-light transition-all">
@@ -302,12 +325,6 @@ export function FinancialChatWidget() {
 
           {/* Input */}
           <div className="px-4 py-3 border-t border-border-strong flex items-center gap-2 shrink-0">
-            <button onClick={() => fileRef.current?.click()}
-              className="shrink-0 w-8 h-8 border border-border-strong flex items-center justify-center hover:border-accent hover:bg-accent-light transition-colors text-ink-mute hover:text-accent">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
-              </svg>
-            </button>
             <input
               ref={inputRef}
               type="text"
