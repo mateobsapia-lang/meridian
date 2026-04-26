@@ -105,6 +105,43 @@ export function Mercado() {
 
       {/* TABLE */}
       <div className="container-custom mt-6 overflow-x-auto">
+        {/* CARDS — mobile */}
+        {!loading && filtered.length > 0 && (
+          <div className="flex flex-col gap-3 md:hidden mb-6">
+            {filtered.map(d => {
+              const score = getScore(d);
+              const margin = ((d.ebitda / d.revenue) * 100).toFixed(0);
+              return (
+                <div key={d.id} onClick={() => navigate(`/deal/${d.id}`)}
+                  className="bg-paper border border-border-strong p-5 cursor-pointer hover:border-accent transition-colors">
+                  <div className="flex items-start justify-between mb-3">
+                    <span className="text-[9px] font-medium tracking-widest uppercase border border-border-strong px-2 py-0.5 text-ink-soft">{d.industria}</span>
+                    <span className="font-mono text-[10px] bg-accent-light text-accent border border-accent/20 px-2 py-0.5">{score}%</span>
+                  </div>
+                  <div className="font-serif text-[20px] font-bold text-ink mb-1">{margin}% EBITDA</div>
+                  <div className="text-[12px] text-ink-soft mb-3">{d.region} · {d.id}</div>
+                  <div className="grid grid-cols-2 gap-3 border-t border-border-subtle pt-3">
+                    <div>
+                      <div className="font-mono text-[9px] text-ink-mute uppercase tracking-widest mb-0.5">Revenue</div>
+                      <div className="font-mono text-[13px] font-medium text-ink">{fmtUSD(d.revenue)}</div>
+                    </div>
+                    <div>
+                      <div className="font-mono text-[9px] text-ink-mute uppercase tracking-widest mb-0.5">Asking</div>
+                      <div className="font-mono text-[13px] font-medium text-accent">{fmtUSD(d.askingPrice)}</div>
+                    </div>
+                  </div>
+                  <button onClick={e => { e.stopPropagation(); openNdaModal(d.id); }}
+                    className="mt-3 text-[10px] font-mono text-accent hover:underline">
+                    Ver teaser →
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* TABLE — desktop only */}
+        <div className="hidden md:block">
         {loading ? (
           <div className="py-24 text-center">
             <div className="font-mono text-[11px] text-ink-mute tracking-widest animate-pulse">CARGANDO MERCADO...</div>
@@ -166,6 +203,7 @@ export function Mercado() {
             </tbody>
           </table></div>
         )}
+        </div>
       </div>
     </div>
   );

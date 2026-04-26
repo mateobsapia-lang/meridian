@@ -23,8 +23,13 @@ import { DiagnosticoModal } from './modals/DiagnosticoModal';
 import { ReporteValuacionModal } from './modals/ReporteValuacionModal';
 import { SimuladorOfertaModal } from './modals/SimuladorOfertaModal';
 import { FinancialChatWidget } from './components/FinancialChatWidget';
+import { NotFound } from './pages/NotFound';
+import { ExitIntent } from './components/ExitIntent';
+import { initGA4 } from './lib/analytics';
 
 export default function App() {
+  // Activar GA4 — reemplazá GA4_ID en src/lib/analytics.ts primero
+  // initGA4();
   return (
     <AppProvider>
       <BrowserRouter>
@@ -41,6 +46,7 @@ export default function App() {
               <Route path="/proceso" element={<Proceso />} />
               <Route path="/compradores" element={<Compradores />} />
               <Route path="/nosotros" element={<Nosotros />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
           <Footer />
@@ -55,6 +61,7 @@ export default function App() {
           <ReporteValuacionModal />
           <SimuladorOfertaModal />
           <FinancialChatWidget />
+          <ExitIntent />
           <Toast />
         </div>
       </BrowserRouter>
